@@ -77,29 +77,51 @@ export default async function HodDashboardPage() {
 
   const serviceIds = departmentServices?.map(service => service.id) || []
 
+  // Try direct query without complex joins first
   const { data: activities, error: activitiesError } = await supabase
     .from("activities")
-    .select(`
-      *,
-      officer:user_id (
-        id,
-        full_name,
-        county
-      ),
-      service:service_id (
-        id,
-        name
-      ),
-      activity_status (
-        id,
-        pending_count,
-        completed_count,
-        updated_by,
-        updated_at
-      )
-    `)
+    .select("*")
     .in("service_id", serviceIds)
     .order("created_at", { ascending: false })
+  
+  console.log("[v0] HOD - Simple activities query result:", {
+    activities,
+    activitiesError: activitiesError?.message,
+    activitiesCount: activities?.length || 0,
+  })
+
+  // If we got activities, then fetch the related data separately
+  let activitiesWithDetails = []
+  if (activities && activities.length > 0) {
+    // Get user details for officers
+    const userIds = [...new Set(activities.map(a => a.user_id))]
+    const { data: users } = await supabase
+      .from("users")
+      .select("id, full_name, county")
+      .in("id", userIds)
+    
+    // Get service details
+    const { data: servicesDetails } = await supabase
+      .from("services")
+      .select("id, name")
+      .in("id", serviceIds)
+    
+    // Get activity statuses
+    const activityIds = activities.map(a => a.id)
+    const { data: statuses } = await supabase
+      .from("activity_status")
+      .select("*")
+      .in("activity_id", activityIds)
+      .order("updated_at", { ascending: false })
+    
+    // Combine the data
+    activitiesWithDetails = activities.map(activity => ({
+      ...activity,
+      officer: users?.find(u => u.id === activity.user_id) || { id: activity.user_id, full_name: "Unknown", county: "Unknown" },
+      service: servicesDetails?.find(s => s.id === activity.service_id) || { id: activity.service_id, name: "Unknown Service" },
+      activity_status: statuses?.filter(s => s.activity_id === activity.id) || []
+    }))
+  }
 
   console.log("[v0] HOD - Activities query result:", {
     activities,
@@ -141,7 +163,7 @@ export default async function HodDashboardPage() {
   return (
     <HodDashboard
       user={userProfile}
-      activities={activities || []}
+      activities={activitiesWithDetails || []}
       officers={officers || []}
       services={services || []}
     />
