@@ -81,12 +81,12 @@ export default async function HodDashboardPage() {
     .from("activities")
     .select(`
       *,
-      officer:user_id!inner (
+      officer:user_id (
         id,
         full_name,
         county
       ),
-      service:service_id!inner (
+      service:service_id (
         id,
         name
       ),

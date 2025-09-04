@@ -53,9 +53,6 @@ interface ActivityReviewListProps {
 }
 
 export function ActivityReviewList({ activities, showActions, onStatusUpdate }: ActivityReviewListProps) {
-  // Debug logging (remove after fixing)
-  console.log("ActivityReviewList received activities:", activities)
-  console.log("Activities length:", activities.length)
   
   const [searchTerm, setSearchTerm] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
@@ -67,13 +64,13 @@ export function ActivityReviewList({ activities, showActions, onStatusUpdate }: 
   const [isLoading, setIsLoading] = useState(false)
   const itemsPerPage = 10
 
-  // Filter activities based on search term
+  // Filter activities based on search term with null checks
   const filteredActivities = activities.filter(
     (activity) =>
-      activity.officer.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      activity.service.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      activity.officer.county.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      activity.description?.toLowerCase().includes(searchTerm.toLowerCase()),
+      activity?.officer?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      activity?.service?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      activity?.officer?.county?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      activity?.description?.toLowerCase().includes(searchTerm.toLowerCase()),
   )
 
   // Paginate activities
