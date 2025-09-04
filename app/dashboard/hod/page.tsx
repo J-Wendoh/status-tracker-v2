@@ -3,13 +3,26 @@ import { createClient } from "@/lib/supabase/server"
 import { HodDashboard } from "@/components/dashboard/hod-dashboard"
 
 export default async function HodDashboardPage() {
+  const timestamp = new Date().toISOString()
+  console.log(`[AUTH-DEBUG] ${timestamp} - HOD Dashboard page started`)
+
   const supabase = await createClient()
+  console.log(`[AUTH-DEBUG] ${timestamp} - HOD Dashboard: Supabase client created`)
 
   const {
     data: { user },
     error,
   } = await supabase.auth.getUser()
+  
+  console.log(`[AUTH-DEBUG] ${timestamp} - HOD Dashboard: Auth getUser result:`, {
+    hasUser: !!user,
+    userId: user?.id,
+    email: user?.email,
+    error: error?.message,
+  })
+
   if (error || !user) {
+    console.log(`[AUTH-DEBUG] ${timestamp} - HOD Dashboard: No valid user, redirecting to login`)
     redirect("/auth/login")
   }
 

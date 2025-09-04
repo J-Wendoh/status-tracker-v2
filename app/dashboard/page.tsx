@@ -2,28 +2,33 @@ import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 
 export default async function DashboardPage() {
-  console.log("[v0] Dashboard - Starting authentication check")
+  const timestamp = new Date().toISOString()
+  console.log(`[AUTH-DEBUG] ${timestamp} - Dashboard page started`)
 
   const supabase = await createClient()
+  console.log(`[AUTH-DEBUG] ${timestamp} - Supabase client created`)
 
   const {
     data: { user },
     error,
   } = await supabase.auth.getUser()
 
-  console.log("[v0] Dashboard - Auth user:", {
+  console.log(`[AUTH-DEBUG] ${timestamp} - Auth getUser result:`, {
     hasUser: !!user,
     userId: user?.id,
     email: user?.email,
+    aud: user?.aud,
+    role: user?.role,
     error: error?.message,
+    errorCode: error?.status,
   })
 
   if (error || !user) {
-    console.log("[v0] Dashboard - No user found, redirecting to login")
+    console.log(`[AUTH-DEBUG] ${timestamp} - No valid user, redirecting to login. Error:`, error)
     redirect("/auth/login")
   }
 
-  console.log("[v0] Dashboard - Fetching user profile for ID:", user.id)
+  console.log(`[AUTH-DEBUG] ${timestamp} - Fetching user profile for ID:`, user.id)
 
   const { data: userProfile, error: profileError } = await supabase
     .from("users")
@@ -31,33 +36,42 @@ export default async function DashboardPage() {
     .eq("id", user.id)
     .single()
 
-  console.log("[v0] Dashboard - User profile query result:", {
+  console.log(`[AUTH-DEBUG] ${timestamp} - User profile query result:`, {
     userProfile,
     profileError: profileError?.message,
+    profileErrorCode: profileError?.code,
+    profileErrorDetails: profileError?.details,
     hasProfile: !!userProfile,
+    category: userProfile?.category,
+    fullName: userProfile?.full_name,
   })
 
   if (!userProfile) {
-    console.log("[v0] Dashboard - No user profile found, error:", profileError?.message)
-    console.log("[v0] Dashboard - Redirecting to login due to missing profile")
+    console.log(`[AUTH-DEBUG] ${timestamp} - No user profile found. Error details:`, {
+      message: profileError?.message,
+      code: profileError?.code,
+      details: profileError?.details,
+      hint: profileError?.hint,
+    })
+    console.log(`[AUTH-DEBUG] ${timestamp} - Redirecting to login due to missing profile`)
     redirect("/auth/login")
   }
 
-  console.log("[v0] Dashboard - User category:", userProfile.category)
+  console.log(`[AUTH-DEBUG] ${timestamp} - User category determined:`, userProfile.category)
 
   switch (userProfile.category) {
     case "Officer":
-      console.log("[v0] Dashboard - Redirecting to officer dashboard")
+      console.log(`[AUTH-DEBUG] ${timestamp} - Redirecting to officer dashboard`)
       redirect("/dashboard/officer")
     case "HOD":
     case "CEO":
-      console.log("[v0] Dashboard - Redirecting to HOD dashboard")
+      console.log(`[AUTH-DEBUG] ${timestamp} - Redirecting to HOD dashboard`)
       redirect("/dashboard/hod")
     case "AG":
-      console.log("[v0] Dashboard - Redirecting to AG dashboard")
+      console.log(`[AUTH-DEBUG] ${timestamp} - Redirecting to AG dashboard`)
       redirect("/dashboard/ag")
     default:
-      console.log("[v0] Dashboard - Unknown category, redirecting to login")
+      console.log(`[AUTH-DEBUG] ${timestamp} - Unknown category '${userProfile.category}', redirecting to login`)
       redirect("/auth/login")
   }
 }

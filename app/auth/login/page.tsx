@@ -20,26 +20,50 @@ export default function LoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
+    const timestamp = new Date().toISOString()
+    console.log(`[AUTH-DEBUG] ${timestamp} - Login attempt started for email:`, email)
+    
     const supabase = createClient()
     setIsLoading(true)
     setError(null)
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      console.log(`[AUTH-DEBUG] ${timestamp} - Calling signInWithPassword`)
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
+      
+      console.log(`[AUTH-DEBUG] ${timestamp} - signInWithPassword result:`, {
+        user: data?.user ? {
+          id: data.user.id,
+          email: data.user.email,
+          aud: data.user.aud,
+        } : null,
+        session: data?.session ? {
+          access_token: data.session.access_token?.substring(0, 20) + '...',
+          refresh_token: data.session.refresh_token?.substring(0, 20) + '...',
+        } : null,
+        error: error?.message,
+        errorStatus: error?.status,
+      })
+
       if (error) throw error
       
+      console.log(`[AUTH-DEBUG] ${timestamp} - Login successful, refreshing router`)
       // Refresh the router to ensure cookies are synced
       router.refresh()
       
+      console.log(`[AUTH-DEBUG] ${timestamp} - Scheduling redirect to dashboard`)
       // Small delay to ensure cookies are properly set
       setTimeout(() => {
+        console.log(`[AUTH-DEBUG] ${new Date().toISOString()} - Executing redirect to dashboard`)
         router.push("/dashboard")
       }, 100)
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : "An error occurred")
+      const errorMsg = error instanceof Error ? error.message : "An error occurred"
+      console.log(`[AUTH-DEBUG] ${timestamp} - Login failed:`, errorMsg)
+      setError(errorMsg)
     } finally {
       setIsLoading(false)
     }

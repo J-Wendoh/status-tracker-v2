@@ -3,19 +3,44 @@ import { createClient } from "@/lib/supabase/server"
 import { AgDashboard } from "@/components/dashboard/ag-dashboard"
 
 export default async function AgDashboardPage() {
+  const timestamp = new Date().toISOString()
+  console.log(`[AUTH-DEBUG] ${timestamp} - AG Dashboard page started`)
+
   const supabase = await createClient()
+  console.log(`[AUTH-DEBUG] ${timestamp} - AG Dashboard: Supabase client created`)
 
   const {
     data: { user },
     error,
   } = await supabase.auth.getUser()
+  
+  console.log(`[AUTH-DEBUG] ${timestamp} - AG Dashboard: Auth getUser result:`, {
+    hasUser: !!user,
+    userId: user?.id,
+    email: user?.email,
+    error: error?.message,
+  })
+
   if (error || !user) {
+    console.log(`[AUTH-DEBUG] ${timestamp} - AG Dashboard: No valid user, redirecting to login`)
     redirect("/auth/login")
   }
 
-  const { data: userProfile } = await supabase.from("users").select("*").eq("id", user.id).single()
+  console.log(`[AUTH-DEBUG] ${timestamp} - AG Dashboard: Fetching user profile for:`, user.id)
+  const { data: userProfile, error: profileError } = await supabase.from("users").select("*").eq("id", user.id).single()
+
+  console.log(`[AUTH-DEBUG] ${timestamp} - AG Dashboard: User profile result:`, {
+    userProfile: userProfile ? { 
+      id: userProfile.id, 
+      category: userProfile.category, 
+      email: userProfile.email 
+    } : null,
+    profileError: profileError?.message,
+    profileErrorCode: profileError?.code,
+  })
 
   if (!userProfile || userProfile.category !== "AG") {
+    console.log(`[AUTH-DEBUG] ${timestamp} - AG Dashboard: Invalid profile or not AG. Category:`, userProfile?.category)
     redirect("/dashboard")
   }
 
