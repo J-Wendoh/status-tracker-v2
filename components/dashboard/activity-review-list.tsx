@@ -111,8 +111,17 @@ export function ActivityReviewList({ activities, showActions, onStatusUpdate }: 
       const pendingCount = Number.parseInt(statusForm.pendingCount) || 0
       const completedCount = Number.parseInt(statusForm.completedCount) || 0
 
+      console.log("[STATUS-UPDATE] Attempting to update status:", {
+        activityId: selectedActivity.id,
+        pendingCount,
+        completedCount,
+        totalCount: selectedActivity.count,
+        existingStatus: selectedActivity.activity_status[0]
+      })
+
       if (pendingCount + completedCount > selectedActivity.count) {
         alert("Total pending and completed count cannot exceed the original count")
+        setIsLoading(false)
         return
       }
 
@@ -121,7 +130,8 @@ export function ActivityReviewList({ activities, showActions, onStatusUpdate }: 
 
       if (existingStatus) {
         // Update existing status
-        const { error } = await supabase
+        console.log("[STATUS-UPDATE] Updating existing status ID:", existingStatus.id)
+        const { data, error } = await supabase
           .from("activity_status")
           .update({
             pending_count: pendingCount,
@@ -130,24 +140,28 @@ export function ActivityReviewList({ activities, showActions, onStatusUpdate }: 
           })
           .eq("id", existingStatus.id)
 
+        console.log("[STATUS-UPDATE] Update result:", { data, error })
         if (error) throw error
       } else {
         // Create new status
-        const { error } = await supabase.from("activity_status").insert({
+        console.log("[STATUS-UPDATE] Creating new status for activity:", selectedActivity.id)
+        const { data, error } = await supabase.from("activity_status").insert({
           activity_id: selectedActivity.id,
           pending_count: pendingCount,
           completed_count: completedCount,
         })
 
+        console.log("[STATUS-UPDATE] Insert result:", { data, error })
         if (error) throw error
       }
 
+      console.log("[STATUS-UPDATE] Status update successful, refreshing...")
       setSelectedActivity(null)
       setStatusForm({ pendingCount: "", completedCount: "" })
       onStatusUpdate()
     } catch (error) {
-      console.error("Error updating status:", error)
-      alert("Failed to update status")
+      console.error("[STATUS-UPDATE] Error updating status:", error)
+      alert(`Failed to update status: ${error.message}`)
     } finally {
       setIsLoading(false)
     }
