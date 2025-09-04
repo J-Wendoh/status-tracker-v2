@@ -13,7 +13,7 @@ export default async function HodDashboardPage() {
     redirect("/auth/login")
   }
 
-  const { data: userProfile } = await supabase
+  const { data: userProfile, error: profileError } = await supabase
     .from("users")
     .select(`
       *,
@@ -26,19 +26,45 @@ export default async function HodDashboardPage() {
     .eq("id", user.id)
     .single()
 
-  if (!userProfile || !["HOD", "CEO"].includes(userProfile.category)) {
+  console.log("[v0] HOD - User profile query result:", {
+    userProfile,
+    profileError: profileError?.message,
+    hasProfile: !!userProfile,
+    hasDepartmentSaga: !!userProfile?.departments_sagas,
+  })
+
+  if (profileError || !userProfile) {
+    console.log("[v0] HOD - Profile error or missing profile, redirecting to dashboard")
+    redirect("/dashboard")
+  }
+
+  if (!["HOD", "CEO"].includes(userProfile.category)) {
+    console.log("[v0] HOD - User category is not HOD/CEO:", userProfile.category)
+    redirect("/dashboard")
+  }
+
+  // Check if user has department assignment
+  if (!userProfile.department_saga_id) {
+    console.log("[v0] HOD - User has no department assignment, redirecting to dashboard")
     redirect("/dashboard")
   }
 
   // First get services for this department/SAGA
-  const { data: departmentServices } = await supabase
+  const { data: departmentServices, error: servicesError } = await supabase
     .from("services")
     .select("id")
     .eq("department_saga_id", userProfile.department_saga_id)
 
+  console.log("[v0] HOD - Department services query result:", {
+    departmentServices,
+    servicesError: servicesError?.message,
+    servicesCount: departmentServices?.length || 0,
+    departmentSagaId: userProfile.department_saga_id,
+  })
+
   const serviceIds = departmentServices?.map(service => service.id) || []
 
-  const { data: activities } = await supabase
+  const { data: activities, error: activitiesError } = await supabase
     .from("activities")
     .select(`
       *,
@@ -62,25 +88,42 @@ export default async function HodDashboardPage() {
     .in("service_id", serviceIds)
     .order("created_at", { ascending: false })
 
-  const { data: officers } = await supabase
+  console.log("[v0] HOD - Activities query result:", {
+    activities,
+    activitiesError: activitiesError?.message,
+    activitiesCount: activities?.length || 0,
+  })
+
+  const { data: officers, error: officersError } = await supabase
     .from("users")
     .select("id, full_name, county")
     .eq("department_saga_id", userProfile.department_saga_id)
     .in("category", ["Officer", "HOD", "CEO"])
     .order("full_name")
 
-  const { data: services } = await supabase
+  console.log("[v0] HOD - Officers query result:", {
+    officers,
+    officersError: officersError?.message,
+    officersCount: officers?.length || 0,
+  })
+
+  const { data: services, error: allServicesError } = await supabase
     .from("services")
     .select("*")
     .eq("department_saga_id", userProfile.department_saga_id)
     .order("name")
 
-  // Debug logging (remove after fixing)
-  console.log("HOD Dashboard Debug:")
-  console.log("Department Services:", departmentServices)
-  console.log("Service IDs:", serviceIds)
-  console.log("Activities:", activities)
-  console.log("Activities length:", activities?.length || 0)
+  console.log("[v0] HOD - All services query result:", {
+    services,
+    allServicesError: allServicesError?.message,
+    allServicesCount: services?.length || 0,
+  })
+
+  // Final validation before rendering
+  if (!userProfile.departments_sagas) {
+    console.log("[v0] HOD - Missing departments_sagas relation, redirecting to dashboard")
+    redirect("/dashboard")
+  }
 
   return (
     <HodDashboard

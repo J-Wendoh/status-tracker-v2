@@ -64,14 +64,14 @@ export function HodDashboard({ user, activities, officers, services }: HodDashbo
   }
 
   // Calculate statistics
-  const totalActivities = activities.length
-  const pendingReview = activities.filter((activity) => activity.activity_status.length === 0).length
-  const inProgress = activities.filter((activity) =>
-    activity.activity_status.some((status) => (status.pending_count || 0) > 0 && (status.completed_count || 0) === 0),
-  ).length
-  const completed = activities.filter((activity) =>
-    activity.activity_status.some((status) => (status.completed_count || 0) > 0),
-  ).length
+  const totalActivities = activities?.length || 0
+  const pendingReview = activities?.filter((activity) => !activity?.activity_status || activity.activity_status.length === 0).length || 0
+  const inProgress = activities?.filter((activity) =>
+    activity?.activity_status?.some((status) => (status?.pending_count || 0) > 0 && (status?.completed_count || 0) === 0),
+  ).length || 0
+  const completed = activities?.filter((activity) =>
+    activity?.activity_status?.some((status) => (status?.completed_count || 0) > 0),
+  ).length || 0
 
   return (
     <div className="min-h-screen bg-background">
@@ -104,9 +104,11 @@ export function HodDashboard({ user, activities, officers, services }: HodDashbo
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
             <span>ID: {user.id}</span>
             <span>County: {user.county}</span>
-            <span>
-              Managing: {user.departments_sagas.name} ({user.departments_sagas.type.toUpperCase()})
-            </span>
+            {user.departments_sagas && (
+              <span>
+                Managing: {user.departments_sagas.name} ({user.departments_sagas.type.toUpperCase()})
+              </span>
+            )}
           </div>
         </div>
 
@@ -201,7 +203,7 @@ export function HodDashboard({ user, activities, officers, services }: HodDashbo
               <CardHeader>
                 <CardTitle>Activity Review & Management</CardTitle>
                 <CardDescription>
-                  Review and update the status of activities submitted by officers in your {user.departments_sagas.type}
+                  Review and update the status of activities submitted by officers in your {user.departments_sagas?.type || 'department'}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -219,7 +221,7 @@ export function HodDashboard({ user, activities, officers, services }: HodDashbo
               activities={activities}
               officers={officers}
               services={services}
-              departmentName={user.departments_sagas.name}
+              departmentName={user.departments_sagas?.name || 'Department'}
             />
           </TabsContent>
         </Tabs>
