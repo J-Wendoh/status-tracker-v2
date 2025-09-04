@@ -1,82 +1,55 @@
 export interface User {
   id: string
-  name: string
-  id_number: string
+  email: string
+  full_name: string
   county: string
-  role: "officer" | "hod_ceo" | "ag"
-  category: "department" | "saga"
-  department_or_saga_id: string
+  category: "Officer" | "HOD" | "CEO" | "AG"
+  department_saga_id: number | null
   created_at: string
+  updated_at: string
 }
 
 export interface DepartmentSaga {
-  id: string
+  id: number
   name: string
-  type: "department" | "saga"
+  type: "Department" | "SAGA"
+  created_at: string
 }
 
 export interface Service {
-  id: string
-  department_or_saga_id: string
+  id: number
   name: string
+  department_saga_id: number | null
+  created_at: string
 }
 
 export interface Activity {
-  id: string
-  officer_id: string
-  service_id: string
+  id: number
+  user_id: string
+  service_id: number | null
   description: string
   count: number
-  file_url?: string
+  file_url?: string | null
   created_at: string
+  updated_at: string
   // Joined data
-  officer?: User
   service?: Service
 }
 
 export interface ActivityStatus {
-  id: string
-  activity_id: string
-  pending_count: number
-  completed_count: number
-  updated_by: string
-  updated_at: string
-  // Joined data
-  activity?: Activity
-  updater?: User
-}
-
-export interface ActivityWithDetails extends Activity {
-  officer: {
-    id: string
-    name: string
-    id_number: string
-    county: string
-  }
-  service: {
-    id: string
-    name: string
-  }
-  activity_status: {
-    id: string
-    pending_count: number
-    completed_count: number
-    updated_by: string
-    updated_at: string
-  }[]
+  id: number
+  activity_id: number | null
+  updated_by: string | null
+  pending_count: number | null
+  completed_count: number | null
+  status: string | null
+  notes: string | null
+  created_at: string
 }
 
 export interface UserWithDepartmentSaga extends User {
   departments_sagas: {
-    id: string
-    name: string
-    type: string
-  }
-}
-
-export interface UserWithDepartment extends User {
-  departments_sagas: {
-    id: string
+    id: number
     name: string
     type: string
   }
