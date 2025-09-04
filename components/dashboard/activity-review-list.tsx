@@ -115,8 +115,7 @@ export function ActivityReviewList({ activities, showActions, onStatusUpdate }: 
         activityId: selectedActivity.id,
         pendingCount,
         completedCount,
-        totalCount: selectedActivity.count,
-        existingStatus: selectedActivity.activity_status[0]
+        totalCount: selectedActivity.count
       })
 
       if (pendingCount + completedCount > selectedActivity.count) {
@@ -125,8 +124,21 @@ export function ActivityReviewList({ activities, showActions, onStatusUpdate }: 
         return
       }
 
-      // Check if status already exists
-      const existingStatus = selectedActivity.activity_status[0]
+      // Query database for existing status (don't rely on stale page data)
+      const { data: existingStatuses, error: fetchError } = await supabase
+        .from("activity_status")
+        .select("*")
+        .eq("activity_id", selectedActivity.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+
+      console.log("[STATUS-UPDATE] Existing status check:", { existingStatuses, fetchError })
+      
+      if (fetchError) {
+        throw new Error(`Failed to check existing status: ${fetchError.message}`)
+      }
+
+      const existingStatus = existingStatuses?.[0]
 
       if (existingStatus) {
         // Update existing status
@@ -136,7 +148,6 @@ export function ActivityReviewList({ activities, showActions, onStatusUpdate }: 
           .update({
             pending_count: pendingCount,
             completed_count: completedCount,
-            updated_at: new Date().toISOString(),
           })
           .eq("id", existingStatus.id)
 

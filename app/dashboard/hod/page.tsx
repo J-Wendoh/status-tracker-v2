@@ -106,20 +106,30 @@ export default async function HodDashboardPage() {
       .select("id, name")
       .in("id", serviceIds)
     
-    // Get activity statuses
+    // Get activity statuses - get the latest status per activity
     const activityIds = activities.map(a => a.id)
-    const { data: statuses } = await supabase
+    const { data: allStatuses } = await supabase
       .from("activity_status")
       .select("*")
       .in("activity_id", activityIds)
-      .order("updated_at", { ascending: false })
+      .order("created_at", { ascending: false })
+    
+    // Group statuses by activity_id and keep only the latest one per activity
+    const latestStatusPerActivity = new Map()
+    allStatuses?.forEach(status => {
+      if (!latestStatusPerActivity.has(status.activity_id)) {
+        latestStatusPerActivity.set(status.activity_id, status)
+      }
+    })
+    
+    console.log("[v0] HOD - Latest status per activity:", Object.fromEntries(latestStatusPerActivity))
     
     // Combine the data
     activitiesWithDetails = activities.map(activity => ({
       ...activity,
       officer: users?.find(u => u.id === activity.user_id) || { id: activity.user_id, full_name: "Unknown", county: "Unknown" },
       service: servicesDetails?.find(s => s.id === activity.service_id) || { id: activity.service_id, name: "Unknown Service" },
-      activity_status: statuses?.filter(s => s.activity_id === activity.id) || []
+      activity_status: latestStatusPerActivity.has(activity.id) ? [latestStatusPerActivity.get(activity.id)] : []
     }))
   }
 
