@@ -30,11 +30,11 @@ export function ActivityList({ activities }: ActivityListProps) {
   const itemsPerPage = 10
 
   // Filter activities based on search term
-  const filteredActivities = activities.filter(
+  const filteredActivities = activities?.filter(
     (activity) =>
-      activity.service.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      activity.description?.toLowerCase().includes(searchTerm.toLowerCase()),
-  )
+      activity?.service?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      activity?.description?.toLowerCase().includes(searchTerm.toLowerCase()),
+  ) || []
 
   // Paginate activities
   const totalPages = Math.ceil(filteredActivities.length / itemsPerPage)
@@ -42,18 +42,18 @@ export function ActivityList({ activities }: ActivityListProps) {
   const paginatedActivities = filteredActivities.slice(startIndex, startIndex + itemsPerPage)
 
   const getStatusBadge = (activity: ActivityListProps["activities"][0]) => {
-    if (activity.activity_status.length === 0) {
+    if (!activity?.activity_status || activity.activity_status.length === 0) {
       return <Badge variant="secondary">Pending Review</Badge>
     }
 
     const latestStatus = activity.activity_status[0]
-    if (latestStatus.completed_count > 0) {
+    if (latestStatus?.completed_count > 0) {
       return (
         <Badge variant="default" className="bg-green-100 text-green-800">
           Completed
         </Badge>
       )
-    } else if (latestStatus.pending_count > 0) {
+    } else if (latestStatus?.pending_count > 0) {
       return (
         <Badge variant="outline" className="border-orange-200 text-orange-800">
           In Progress
@@ -74,7 +74,7 @@ export function ActivityList({ activities }: ActivityListProps) {
     document.body.removeChild(link)
   }
 
-  if (activities.length === 0) {
+  if (!activities || activities.length === 0) {
     return (
       <Card>
         <CardContent className="flex flex-col items-center justify-center py-12">
@@ -120,20 +120,20 @@ export function ActivityList({ activities }: ActivityListProps) {
               <TableRow key={activity.id}>
                 <TableCell>
                   <div>
-                    <div className="font-medium">{activity.service.name}</div>
-                    {activity.description && (
+                    <div className="font-medium">{activity?.service?.name || 'Unknown Service'}</div>
+                    {activity?.description && (
                       <div className="text-sm text-muted-foreground mt-1">{activity.description}</div>
                     )}
                   </div>
                 </TableCell>
                 <TableCell>
-                  <span className="font-medium">{activity.count}</span>
+                  <span className="font-medium">{activity?.count || 0}</span>
                 </TableCell>
                 <TableCell>{getStatusBadge(activity)}</TableCell>
                 <TableCell>
                   <div className="flex items-center gap-1 text-sm text-muted-foreground">
                     <Calendar className="h-3 w-3" />
-                    {format(new Date(activity.created_at), "MMM dd, yyyy")}
+                    {activity?.created_at ? format(new Date(activity.created_at), "MMM dd, yyyy") : 'N/A'}
                   </div>
                 </TableCell>
                 <TableCell>

@@ -53,6 +53,10 @@ interface ActivityReviewListProps {
 }
 
 export function ActivityReviewList({ activities, showActions, onStatusUpdate }: ActivityReviewListProps) {
+  // Debug logging (remove after fixing)
+  console.log("ActivityReviewList received activities:", activities)
+  console.log("Activities length:", activities.length)
+  
   const [searchTerm, setSearchTerm] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
   const [selectedActivity, setSelectedActivity] = useState<ActivityWithDetails | null>(null)

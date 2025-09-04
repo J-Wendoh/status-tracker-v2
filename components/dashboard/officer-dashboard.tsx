@@ -39,14 +39,16 @@ export function OfficerDashboard({ user, services, activities }: OfficerDashboar
     router.push("/auth/login")
   }
 
-  const totalActivities = activities.length
-  const pendingActivities = activities.filter(
+  const totalActivities = activities?.length || 0
+  const pendingActivities = activities?.filter(
     (activity) =>
-      activity.activity_status.length === 0 || activity.activity_status.some((status) => status.pending_count > 0),
-  ).length
-  const completedActivities = activities.filter((activity) =>
-    activity.activity_status.some((status) => status.completed_count > 0),
-  ).length
+      !activity.activity_status || 
+      activity.activity_status.length === 0 || 
+      activity.activity_status.some((status) => status?.pending_count > 0),
+  ).length || 0
+  const completedActivities = activities?.filter((activity) =>
+    activity.activity_status?.some((status) => status?.completed_count > 0),
+  ).length || 0
 
   return (
     <div className="min-h-screen bg-background">
@@ -74,14 +76,16 @@ export function OfficerDashboard({ user, services, activities }: OfficerDashboar
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-2">
             <UserIcon className="h-5 w-5 text-muted-foreground" />
-            <h2 className="text-2xl font-semibold">Welcome, {user.name}</h2>
+            <h2 className="text-2xl font-semibold">Welcome, {user.full_name}</h2>
           </div>
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
-            <span>ID: {user.id_number}</span>
+            <span>ID: {user.id}</span>
             <span>County: {user.county}</span>
-            <span>
-              {user.departments_sagas.type === "department" ? "Department" : "SAGA"}: {user.departments_sagas.name}
-            </span>
+            {user.departments_sagas && (
+              <span>
+                {user.departments_sagas.type === "Department" ? "Department" : "SAGA"}: {user.departments_sagas.name}
+              </span>
+            )}
           </div>
         </div>
 

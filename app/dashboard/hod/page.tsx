@@ -42,12 +42,12 @@ export default async function HodDashboardPage() {
     .from("activities")
     .select(`
       *,
-      officer:user_id (
+      officer:user_id!inner (
         id,
         full_name,
         county
       ),
-      service:service_id (
+      service:service_id!inner (
         id,
         name
       ),
@@ -74,6 +74,13 @@ export default async function HodDashboardPage() {
     .select("*")
     .eq("department_saga_id", userProfile.department_saga_id)
     .order("name")
+
+  // Debug logging (remove after fixing)
+  console.log("HOD Dashboard Debug:")
+  console.log("Department Services:", departmentServices)
+  console.log("Service IDs:", serviceIds)
+  console.log("Activities:", activities)
+  console.log("Activities length:", activities?.length || 0)
 
   return (
     <HodDashboard
