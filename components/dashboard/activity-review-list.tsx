@@ -21,28 +21,27 @@ import { format } from "date-fns"
 import { createClient } from "@/lib/supabase/client"
 
 interface ActivityWithDetails {
-  id: string
-  officer_id: string
-  service_id: string
+  id: number
+  user_id: string
+  service_id: number
   description: string
   count: number
   file_url?: string
   created_at: string
   officer: {
     id: string
-    name: string
-    id_number: string
+    full_name: string
     county: string
   }
   service: {
-    id: string
+    id: number
     name: string
   }
   activity_status: {
-    id: string
-    pending_count: number
-    completed_count: number
-    updated_by: string
+    id: number
+    pending_count: number | null
+    completed_count: number | null
+    updated_by: string | null
     updated_at: string
   }[]
 }
@@ -67,7 +66,7 @@ export function ActivityReviewList({ activities, showActions, onStatusUpdate }: 
   // Filter activities based on search term
   const filteredActivities = activities.filter(
     (activity) =>
-      activity.officer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      activity.officer.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       activity.service.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       activity.officer.county.toLowerCase().includes(searchTerm.toLowerCase()) ||
       activity.description?.toLowerCase().includes(searchTerm.toLowerCase()),
@@ -84,13 +83,13 @@ export function ActivityReviewList({ activities, showActions, onStatusUpdate }: 
     }
 
     const latestStatus = activity.activity_status[0]
-    if (latestStatus.completed_count > 0) {
+    if (latestStatus.completed_count && latestStatus.completed_count > 0) {
       return (
         <Badge variant="default" className="bg-green-100 text-green-800">
           Completed ({latestStatus.completed_count})
         </Badge>
       )
-    } else if (latestStatus.pending_count > 0) {
+    } else if (latestStatus.pending_count && latestStatus.pending_count > 0) {
       return (
         <Badge variant="outline" className="border-orange-200 text-orange-800">
           In Progress ({latestStatus.pending_count})
@@ -158,8 +157,8 @@ export function ActivityReviewList({ activities, showActions, onStatusUpdate }: 
     const existingStatus = activity.activity_status[0]
     if (existingStatus) {
       setStatusForm({
-        pendingCount: existingStatus.pending_count.toString(),
-        completedCount: existingStatus.completed_count.toString(),
+        pendingCount: (existingStatus.pending_count || 0).toString(),
+        completedCount: (existingStatus.completed_count || 0).toString(),
       })
     } else {
       setStatusForm({ pendingCount: "", completedCount: "" })
@@ -220,9 +219,9 @@ export function ActivityReviewList({ activities, showActions, onStatusUpdate }: 
               <TableRow key={activity.id}>
                 <TableCell>
                   <div>
-                    <div className="font-medium">{activity.officer.name}</div>
+                    <div className="font-medium">{activity.officer.full_name}</div>
                     <div className="text-sm text-muted-foreground">
-                      {activity.officer.county} • ID: {activity.officer.id_number}
+                      {activity.officer.county}
                     </div>
                   </div>
                 </TableCell>
@@ -272,7 +271,7 @@ export function ActivityReviewList({ activities, showActions, onStatusUpdate }: 
                         <DialogHeader>
                           <DialogTitle>Update Activity Status</DialogTitle>
                           <DialogDescription>
-                            Update the progress status for {activity.officer.name}'s activity: {activity.service.name}
+                            Update the progress status for {activity.officer.full_name}'s activity: {activity.service.name}
                           </DialogDescription>
                         </DialogHeader>
                         <div className="grid gap-4 py-4">

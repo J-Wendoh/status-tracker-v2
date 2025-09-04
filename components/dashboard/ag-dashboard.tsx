@@ -13,53 +13,42 @@ import { useRouter } from "next/navigation"
 import type { User, DepartmentSaga, Service } from "@/lib/supabase/types"
 
 interface ActivityWithFullDetails {
-  id: string
-  officer_id: string
-  service_id: string
+  id: number
+  user_id: string
+  service_id: number
   description: string
   count: number
-  file_url?: string
+  file_url?: string | null
   created_at: string
-  officer: {
+  updated_at: string
+  user: {
     id: string
-    name: string
-    id_number: string
+    full_name: string
+    email: string
     county: string
-    department_or_saga_id: string
-    departments_sagas: {
-      id: string
-      name: string
-      type: string
-    }
+    category: string
+    department_saga_id: number
   }
   service: {
-    id: string
+    id: number
     name: string
-    department_or_saga_id: string
+    department_saga_id: number
   }
   activity_status: {
-    id: string
-    pending_count: number
-    completed_count: number
-    updated_by: string
-    updated_at: string
+    id: number
+    pending_count: number | null
+    completed_count: number | null
+    updated_by: string | null
+    created_at: string
   }[]
 }
 
 interface OfficerWithDepartment extends User {
   departments_sagas: {
-    id: string
+    id: number
     name: string
     type: string
-  }
-}
-
-interface ServiceWithDepartment extends Service {
-  departments_sagas: {
-    id: string
-    name: string
-    type: string
-  }
+  } | null
 }
 
 interface AgDashboardProps {
@@ -67,7 +56,7 @@ interface AgDashboardProps {
   departmentsSagas: DepartmentSaga[]
   activities: ActivityWithFullDetails[]
   officers: OfficerWithDepartment[]
-  services: ServiceWithDepartment[]
+  services: Service[]
 }
 
 export function AgDashboard({ user, departmentsSagas, activities, officers, services }: AgDashboardProps) {
@@ -81,8 +70,8 @@ export function AgDashboard({ user, departmentsSagas, activities, officers, serv
   }
 
   // Group departments and SAGAs
-  const departments = departmentsSagas.filter((item) => item.type === "department")
-  const sagas = departmentsSagas.filter((item) => item.type === "saga")
+  const departments = departmentsSagas.filter((item) => item.type === "Department")
+  const sagas = departmentsSagas.filter((item) => item.type === "SAGA")
 
   // Calculate overall statistics
   const totalActivities = activities.length
@@ -91,19 +80,19 @@ export function AgDashboard({ user, departmentsSagas, activities, officers, serv
 
   const pendingActivities = activities.filter((activity) => activity.activity_status.length === 0).length
   const completedActivities = activities.filter((activity) =>
-    activity.activity_status.some((status) => status.completed_count > 0),
+    activity.activity_status.some((status) => status.completed_count && status.completed_count > 0),
   ).length
 
   // Get selected department/SAGA data
-  const selectedDepartmentSaga = departmentsSagas.find((item) => item.id === selectedView)
+  const selectedDepartmentSaga = departmentsSagas.find((item) => item.id.toString() === selectedView)
   const selectedActivities = selectedDepartmentSaga
-    ? activities.filter((activity) => activity.service.department_or_saga_id === selectedDepartmentSaga.id)
+    ? activities.filter((activity) => activity.service.department_saga_id === selectedDepartmentSaga.id)
     : []
   const selectedOfficers = selectedDepartmentSaga
-    ? officers.filter((officer) => officer.department_or_saga_id === selectedDepartmentSaga.id)
+    ? officers.filter((officer) => officer.departments_sagas?.id === selectedDepartmentSaga.id)
     : []
   const selectedServices = selectedDepartmentSaga
-    ? services.filter((service) => service.department_or_saga_id === selectedDepartmentSaga.id)
+    ? services.filter((service) => service.department_saga_id === selectedDepartmentSaga.id)
     : []
 
   return (
@@ -143,16 +132,16 @@ export function AgDashboard({ user, departmentsSagas, activities, officers, serv
               <div className="space-y-1">
                 {departments.map((dept) => {
                   const deptActivities = activities.filter(
-                    (activity) => activity.service.department_or_saga_id === dept.id,
+                    (activity) => activity.service.department_saga_id === dept.id,
                   ).length
-                  const deptOfficers = officers.filter((officer) => officer.department_or_saga_id === dept.id).length
+                  const deptOfficers = officers.filter((officer) => officer.departments_sagas?.id === dept.id).length
 
                   return (
                     <Button
                       key={dept.id}
-                      variant={selectedView === dept.id ? "default" : "ghost"}
+                      variant={selectedView === dept.id.toString() ? "default" : "ghost"}
                       className="w-full justify-start text-left h-auto p-3"
-                      onClick={() => setSelectedView(dept.id)}
+                      onClick={() => setSelectedView(dept.id.toString())}
                     >
                       <div className="flex-1">
                         <div className="font-medium text-sm">{dept.name}</div>
@@ -179,16 +168,16 @@ export function AgDashboard({ user, departmentsSagas, activities, officers, serv
               <div className="space-y-1">
                 {sagas.map((saga) => {
                   const sagaActivities = activities.filter(
-                    (activity) => activity.service.department_or_saga_id === saga.id,
+                    (activity) => activity.service.department_saga_id === saga.id,
                   ).length
-                  const sagaOfficers = officers.filter((officer) => officer.department_or_saga_id === saga.id).length
+                  const sagaOfficers = officers.filter((officer) => officer.departments_sagas?.id === saga.id).length
 
                   return (
                     <Button
                       key={saga.id}
-                      variant={selectedView === saga.id ? "default" : "ghost"}
+                      variant={selectedView === saga.id.toString() ? "default" : "ghost"}
                       className="w-full justify-start text-left h-auto p-3"
-                      onClick={() => setSelectedView(saga.id)}
+                      onClick={() => setSelectedView(saga.id.toString())}
                     >
                       <div className="flex-1">
                         <div className="font-medium text-sm">{saga.name}</div>

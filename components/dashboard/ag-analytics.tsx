@@ -22,68 +22,58 @@ import { format, subDays, eachDayOfInterval } from "date-fns"
 import type { DepartmentSaga, Service } from "@/lib/supabase/types"
 
 interface ActivityWithFullDetails {
-  id: string
-  officer_id: string
-  service_id: string
+  id: number
+  user_id: string
+  service_id: number
   description: string
   count: number
-  file_url?: string
+  file_url?: string | null
   created_at: string
-  officer: {
+  updated_at: string
+  user: {
     id: string
-    name: string
-    id_number: string
+    full_name: string
+    email: string
     county: string
-    department_or_saga_id: string
-    departments_sagas: {
-      id: string
-      name: string
-      type: string
-    }
+    category: string
+    department_saga_id: number
   }
   service: {
-    id: string
+    id: number
     name: string
-    department_or_saga_id: string
+    department_saga_id: number
   }
   activity_status: {
-    id: string
-    pending_count: number
-    completed_count: number
-    updated_by: string
-    updated_at: string
+    id: number
+    pending_count: number | null
+    completed_count: number | null
+    updated_by: string | null
+    created_at: string
   }[]
 }
 
 interface OfficerWithDepartment {
   id: string
-  name: string
-  id_number: string
+  email: string
+  full_name: string
   county: string
-  role: string
   category: string
-  department_or_saga_id: string
+  department_saga_id: number | null
   created_at: string
+  updated_at: string
   departments_sagas: {
-    id: string
+    id: number
     name: string
     type: string
-  }
+  } | null
 }
 
-interface ServiceWithDepartment extends Service {
-  departments_sagas: {
-    id: string
-    name: string
-    type: string
-  }
-}
 
 interface AgAnalyticsProps {
   activities: ActivityWithFullDetails[]
   officers: OfficerWithDepartment[]
   departmentsSagas: DepartmentSaga[]
-  services: ServiceWithDepartment[]
+  services: Service[]
 }
 
 const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8", "#82CA9D", "#FFC658", "#FF7C7C"]
@@ -92,24 +82,24 @@ export function AgAnalytics({ activities, officers, departmentsSagas, services }
   // Overall statistics
   const totalActivities = activities.length
   const totalOfficers = officers.length
-  const totalDepartments = departmentsSagas.filter((item) => item.type === "department").length
-  const totalSagas = departmentsSagas.filter((item) => item.type === "saga").length
+  const totalDepartments = departmentsSagas.filter((item) => item.type === "Department").length
+  const totalSagas = departmentsSagas.filter((item) => item.type === "SAGA").length
 
   const pendingActivities = activities.filter((activity) => activity.activity_status.length === 0).length
   const inProgressActivities = activities.filter((activity) =>
-    activity.activity_status.some((status) => status.pending_count > 0 && status.completed_count === 0),
+    activity.activity_status.some((status) => status.pending_count && status.pending_count > 0 && !status.completed_count),
   ).length
   const completedActivities = activities.filter((activity) =>
-    activity.activity_status.some((status) => status.completed_count > 0),
+    activity.activity_status.some((status) => status.completed_count && status.completed_count > 0),
   ).length
 
   // Department/SAGA performance
   const departmentPerformance = departmentsSagas.map((dept) => {
-    const deptActivities = activities.filter((activity) => activity.service.department_or_saga_id === dept.id)
-    const deptOfficers = officers.filter((officer) => officer.department_or_saga_id === dept.id)
+    const deptActivities = activities.filter((activity) => activity.service.department_saga_id === dept.id)
+    const deptOfficers = officers.filter((officer) => officer.department_saga_id === dept.id)
     const totalCount = deptActivities.reduce((sum, activity) => sum + activity.count, 0)
     const completedCount = deptActivities.reduce((sum, activity) => {
-      const completed = activity.activity_status.reduce((statusSum, status) => statusSum + status.completed_count, 0)
+      const completed = activity.activity_status.reduce((statusSum, status) => statusSum + (status.completed_count || 0), 0)
       return sum + completed
     }, 0)
 
@@ -131,12 +121,12 @@ export function AgAnalytics({ activities, officers, departmentsSagas, services }
       const existing = acc.find((item) => item.county === officer.county)
       if (existing) {
         existing.count += 1
-        existing.activities += activities.filter((activity) => activity.officer_id === officer.id).length
+        existing.activities += activities.filter((activity) => activity.user_id === officer.id).length
       } else {
         acc.push({
           county: officer.county,
           count: 1,
-          activities: activities.filter((activity) => activity.officer_id === officer.id).length,
+          activities: activities.filter((activity) => activity.user_id === officer.id).length,
         })
       }
       return acc
@@ -258,7 +248,7 @@ export function AgAnalytics({ activities, officers, departmentsSagas, services }
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  label={({ name, percent }) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
                   outerRadius={80}
                   fill="#8884d8"
                   dataKey="value"
@@ -345,8 +335,8 @@ export function AgAnalytics({ activities, officers, departmentsSagas, services }
                   <div key={dept.fullName} className="space-y-2">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <Badge variant={dept.type === "department" ? "default" : "secondary"} className="text-xs">
-                          {dept.type.toUpperCase()}
+                        <Badge variant={dept.type === "Department" ? "default" : "secondary"} className="text-xs">
+                          {dept.type}
                         </Badge>
                         <span className="font-medium text-sm">{dept.name}</span>
                       </div>

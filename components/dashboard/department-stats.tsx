@@ -36,7 +36,7 @@ interface ActivityWithDetails {
 
 interface DepartmentStatsProps {
   activities: ActivityWithDetails[]
-  officers: Pick<User, "id" | "name" | "id_number" | "county">[]
+  officers: Pick<User, "id" | "full_name" | "county">[]
   services: Service[]
   departmentName: string
 }

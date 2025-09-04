@@ -14,53 +14,50 @@ import { format } from "date-fns"
 import type { DepartmentSaga, Service } from "@/lib/supabase/types"
 
 interface ActivityWithFullDetails {
-  id: string
-  officer_id: string
-  service_id: string
+  id: number
+  user_id: string
+  service_id: number
   description: string
   count: number
-  file_url?: string
+  file_url?: string | null
   created_at: string
-  officer: {
+  updated_at: string
+  user: {
     id: string
-    name: string
-    id_number: string
+    full_name: string
+    email: string
     county: string
-    department_or_saga_id: string
-    departments_sagas: {
-      id: string
-      name: string
-      type: string
-    }
+    category: string
+    department_saga_id: number
   }
   service: {
-    id: string
+    id: number
     name: string
-    department_or_saga_id: string
+    department_saga_id: number
   }
   activity_status: {
-    id: string
-    pending_count: number
-    completed_count: number
-    updated_by: string
-    updated_at: string
+    id: number
+    pending_count: number | null
+    completed_count: number | null
+    updated_by: string | null
+    created_at: string
   }[]
 }
 
 interface OfficerWithDepartment {
   id: string
-  name: string
-  id_number: string
+  email: string
+  full_name: string
   county: string
-  role: string
   category: string
-  department_or_saga_id: string
+  department_saga_id: number | null
   created_at: string
+  updated_at: string
   departments_sagas: {
-    id: string
+    id: number
     name: string
     type: string
-  }
+  } | null
 }
 
 interface AgDepartmentViewProps {
@@ -83,15 +80,15 @@ export function AgDepartmentView({ departmentSaga, activities, officers, service
 
   const pendingActivities = activities.filter((activity) => activity.activity_status.length === 0).length
   const completedActivities = activities.filter((activity) =>
-    activity.activity_status.some((status) => status.completed_count > 0),
+    activity.activity_status.some((status) => status.completed_count && status.completed_count > 0),
   ).length
 
   // Officer performance
   const officerPerformance = officers.map((officer) => {
-    const officerActivities = activities.filter((activity) => activity.officer_id === officer.id)
+    const officerActivities = activities.filter((activity) => activity.user_id === officer.id)
     const totalCount = officerActivities.reduce((sum, activity) => sum + activity.count, 0)
     const completedCount = officerActivities.reduce((sum, activity) => {
-      const completed = activity.activity_status.reduce((statusSum, status) => statusSum + status.completed_count, 0)
+      const completed = activity.activity_status.reduce((statusSum, status) => statusSum + (status.completed_count || 0), 0)
       return sum + completed
     }, 0)
 
@@ -106,7 +103,7 @@ export function AgDepartmentView({ departmentSaga, activities, officers, service
 
   // Service usage
   const serviceUsage = services.map((service) => {
-    const serviceActivities = activities.filter((activity) => activity.service_id === service.id)
+    const serviceActivities = activities.filter((activity) => activity.service.id === service.id)
     const totalCount = serviceActivities.reduce((sum, activity) => sum + activity.count, 0)
 
     return {
@@ -120,9 +117,9 @@ export function AgDepartmentView({ departmentSaga, activities, officers, service
   // Filter activities for table
   const filteredActivities = activities.filter(
     (activity) =>
-      activity.officer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      activity.user.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       activity.service.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      activity.officer.county.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      activity.user.county.toLowerCase().includes(searchTerm.toLowerCase()) ||
       activity.description?.toLowerCase().includes(searchTerm.toLowerCase()),
   )
 
@@ -137,13 +134,13 @@ export function AgDepartmentView({ departmentSaga, activities, officers, service
     }
 
     const latestStatus = activity.activity_status[0]
-    if (latestStatus.completed_count > 0) {
+    if (latestStatus.completed_count && latestStatus.completed_count > 0) {
       return (
         <Badge variant="default" className="bg-green-100 text-green-800">
           Completed ({latestStatus.completed_count})
         </Badge>
       )
-    } else if (latestStatus.pending_count > 0) {
+    } else if (latestStatus.pending_count && latestStatus.pending_count > 0) {
       return (
         <Badge variant="outline" className="border-orange-200 text-orange-800">
           In Progress ({latestStatus.pending_count})
@@ -255,7 +252,7 @@ export function AgDepartmentView({ departmentSaga, activities, officers, service
                       <div className="flex-1">
                         <div className="font-medium">{activity.service.name}</div>
                         <div className="text-sm text-muted-foreground">
-                          by {activity.officer.name} • {activity.officer.county} • Count: {activity.count}
+                          by {activity.user.full_name} • {activity.user.county} • Count: {activity.count}
                         </div>
                         {activity.description && (
                           <div className="text-sm text-muted-foreground mt-1">{activity.description}</div>
@@ -314,9 +311,9 @@ export function AgDepartmentView({ departmentSaga, activities, officers, service
                         <TableRow key={activity.id}>
                           <TableCell>
                             <div>
-                              <div className="font-medium">{activity.officer.name}</div>
+                              <div className="font-medium">{activity.user.full_name}</div>
                               <div className="text-sm text-muted-foreground">
-                                {activity.officer.county} • ID: {activity.officer.id_number}
+                                {activity.user.county} • {activity.user.email}
                               </div>
                             </div>
                           </TableCell>
@@ -405,9 +402,9 @@ export function AgDepartmentView({ departmentSaga, activities, officers, service
                 {officerPerformance.map((officer) => (
                   <div key={officer.id} className="flex items-center justify-between p-4 border rounded-lg">
                     <div className="flex-1">
-                      <div className="font-medium">{officer.name}</div>
+                      <div className="font-medium">{officer.full_name}</div>
                       <div className="text-sm text-muted-foreground">
-                        {officer.county} • ID: {officer.id_number}
+                        {officer.county} • {officer.email}
                       </div>
                     </div>
                     <div className="text-right space-y-1">

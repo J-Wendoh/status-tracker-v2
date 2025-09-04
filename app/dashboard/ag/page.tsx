@@ -29,16 +29,13 @@ export default async function AgDashboardPage() {
     .from("activities")
     .select(`
       *,
-      officer:user_id (
+      user:user_id (
         id,
         full_name,
+        email,
         county,
-        department_saga_id,
-        departments_sagas:department_saga_id (
-          id,
-          name,
-          type
-        )
+        category,
+        department_saga_id
       ),
       service:service_id (
         id,
@@ -50,7 +47,7 @@ export default async function AgDashboardPage() {
         pending_count,
         completed_count,
         updated_by,
-        updated_at
+        created_at
       )
     `)
     .order("created_at", { ascending: false })
@@ -65,18 +62,13 @@ export default async function AgDashboardPage() {
         type
       )
     `)
-    .eq("category", "Officer")
+    .in("category", ["Officer", "HOD", "CEO"])
     .order("full_name")
 
   const { data: services } = await supabase
     .from("services")
     .select(`
-      *,
-      departments_sagas:department_saga_id (
-        id,
-        name,
-        type
-      )
+      *
     `)
     .order("name")
 

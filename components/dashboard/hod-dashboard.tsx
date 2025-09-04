@@ -13,28 +13,27 @@ import { useRouter } from "next/navigation"
 import type { Service, User } from "@/lib/supabase/types"
 
 interface ActivityWithDetails {
-  id: string
-  officer_id: string
-  service_id: string
+  id: number
+  user_id: string
+  service_id: number
   description: string
   count: number
   file_url?: string
   created_at: string
   officer: {
     id: string
-    name: string
-    id_number: string
+    full_name: string
     county: string
   }
   service: {
-    id: string
+    id: number
     name: string
   }
   activity_status: {
-    id: string
-    pending_count: number
-    completed_count: number
-    updated_by: string
+    id: number
+    pending_count: number | null
+    completed_count: number | null
+    updated_by: string | null
     updated_at: string
   }[]
 }
@@ -50,7 +49,7 @@ interface UserWithDepartment extends User {
 interface HodDashboardProps {
   user: UserWithDepartment
   activities: ActivityWithDetails[]
-  officers: Pick<User, "id" | "name" | "id_number" | "county">[]
+  officers: Pick<User, "id" | "full_name" | "county">[]
   services: Service[]
 }
 
@@ -68,10 +67,10 @@ export function HodDashboard({ user, activities, officers, services }: HodDashbo
   const totalActivities = activities.length
   const pendingReview = activities.filter((activity) => activity.activity_status.length === 0).length
   const inProgress = activities.filter((activity) =>
-    activity.activity_status.some((status) => status.pending_count > 0 && status.completed_count === 0),
+    activity.activity_status.some((status) => (status.pending_count || 0) > 0 && (status.completed_count || 0) === 0),
   ).length
   const completed = activities.filter((activity) =>
-    activity.activity_status.some((status) => status.completed_count > 0),
+    activity.activity_status.some((status) => (status.completed_count || 0) > 0),
   ).length
 
   return (
@@ -100,10 +99,10 @@ export function HodDashboard({ user, activities, officers, services }: HodDashbo
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-2">
             <UserCheck className="h-5 w-5 text-muted-foreground" />
-            <h2 className="text-2xl font-semibold">Welcome, {user.name}</h2>
+            <h2 className="text-2xl font-semibold">Welcome, {user.full_name}</h2>
           </div>
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
-            <span>ID: {user.id_number}</span>
+            <span>ID: {user.id}</span>
             <span>County: {user.county}</span>
             <span>
               Managing: {user.departments_sagas.name} ({user.departments_sagas.type.toUpperCase()})

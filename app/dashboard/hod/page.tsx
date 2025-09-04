@@ -30,6 +30,14 @@ export default async function HodDashboardPage() {
     redirect("/dashboard")
   }
 
+  // First get services for this department/SAGA
+  const { data: departmentServices } = await supabase
+    .from("services")
+    .select("id")
+    .eq("department_saga_id", userProfile.department_saga_id)
+
+  const serviceIds = departmentServices?.map(service => service.id) || []
+
   const { data: activities } = await supabase
     .from("activities")
     .select(`
@@ -51,14 +59,14 @@ export default async function HodDashboardPage() {
         updated_at
       )
     `)
-    .eq("officer.department_saga_id", userProfile.department_saga_id)
+    .in("service_id", serviceIds)
     .order("created_at", { ascending: false })
 
   const { data: officers } = await supabase
     .from("users")
     .select("id, full_name, county")
     .eq("department_saga_id", userProfile.department_saga_id)
-    .eq("category", "Officer")
+    .in("category", ["Officer", "HOD", "CEO"])
     .order("full_name")
 
   const { data: services } = await supabase
