@@ -32,9 +32,11 @@ interface ModernLayoutProps {
     role: string
     department?: string
   }
+  backgroundImage?: string
+  pageTitle?: string
 }
 
-const ModernLayout = ({ children, navigation, userInfo }: ModernLayoutProps) => {
+const ModernLayout = ({ children, navigation, userInfo, backgroundImage = '/background02.png', pageTitle = 'Dashboard' }: ModernLayoutProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const router = useRouter()
 
@@ -74,105 +76,231 @@ const ModernLayout = ({ children, navigation, userInfo }: ModernLayoutProps) => 
 
   const SidebarContent = () => (
     <>
-      {/* Header */}
-      <div className="flex items-center justify-between px-6 py-6 border-b border-neutral-700">
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-luxury-gradient rounded-xl flex items-center justify-center shadow-lg">
-            <Image
-              src="/courtofarms.jpeg"
-              alt="Kenya Coat of Arms"
-              width={24}
-              height={24}
-              className="rounded-md object-cover"
-            />
+      {/* Luxurious Header */}
+      <div className="relative px-6 py-8 border-b border-white/20 bg-gradient-to-r from-white/5 to-[#BE6400]/5">
+        {/* Premium backdrop */}
+        <div className="absolute inset-0 bg-gradient-to-br from-green-500/3 via-white/10 to-red-500/3" />
+        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gold-400/30 to-transparent" />
+        
+        <div className="relative z-10 flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <motion.div 
+              className="relative w-12 h-12 bg-luxury-gradient rounded-2xl flex items-center justify-center shadow-2xl ring-1 ring-white/20"
+              whileHover={{ scale: 1.05, rotate: 5 }}
+              transition={{ duration: 0.2 }}
+            >
+              {/* Glow effect */}
+              <div className="absolute inset-0 bg-luxury-gradient rounded-2xl blur-lg opacity-50" />
+              <Image
+                src="/courtofarms.jpeg"
+                alt="Kenya Coat of Arms"
+                width={28}
+                height={28}
+                className="rounded-lg object-cover relative z-10"
+              />
+            </motion.div>
+            <div>
+              <motion.h1 
+                className="text-xl font-bold bg-gradient-to-r from-neutral-800 via-[#BE6400] to-neutral-800 bg-clip-text text-transparent"
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.1 }}
+              >
+                OAG System
+              </motion.h1>
+              <motion.p 
+                className="text-sm text-neutral-600 font-medium tracking-wide"
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.2 }}
+              >
+                Activity Tracking Platform
+              </motion.p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-lg font-bold text-primary-400">OAG System</h1>
-            <p className="text-xs text-neutral-400">Activity Tracking</p>
-          </div>
+          <motion.button
+            onClick={() => setSidebarOpen(false)}
+            className="lg:hidden p-3 rounded-2xl bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 transition-all duration-300 hover:shadow-lg"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <XMarkIcon className="w-5 h-5 text-neutral-700" />
+          </motion.button>
         </div>
-        <button
-          onClick={() => setSidebarOpen(false)}
-          className="lg:hidden p-2 rounded-lg hover:bg-neutral-800 transition-colors"
-        >
-          <XMarkIcon className="w-5 h-5 text-neutral-400" />
-        </button>
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
-        {navigation.map((item) => {
+      {/* Luxurious Navigation */}
+      <nav className="flex-1 px-4 py-8 space-y-3 overflow-y-auto">
+        {navigation.map((item, index) => {
           const IconComponent = item.icon
           return (
-            <Link
+            <motion.div
               key={item.name}
-              href={item.href}
-              className={`group flex items-center px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 hover:scale-[1.02] hover:shadow-md ${
-                item.current
-                  ? 'bg-luxury-gradient text-white shadow-lg border border-primary-300'
-                  : 'text-neutral-300 hover:bg-neutral-800 hover:text-primary-400 border border-transparent'
-              }`}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: index * 0.1 + 0.3 }}
             >
-              <IconComponent 
-                className={`mr-3 h-5 w-5 transition-all duration-300 ${
-                  item.current ? 'text-white' : 'text-neutral-400 group-hover:text-primary-400'
+              <Link
+                href={item.href}
+                className={`group relative flex items-center px-5 py-4 rounded-2xl text-sm font-semibold transition-all duration-500 hover:scale-[1.02] hover:shadow-xl overflow-hidden ${
+                  item.current
+                    ? 'bg-gradient-to-r from-[#BE6400] to-[#BE6400]/80 text-white shadow-2xl ring-1 ring-[#BE6400]/20 hover:shadow-2xl hover:shadow-[#BE6400]/25'
+                    : 'text-neutral-700 hover:bg-white/50 hover:text-[#BE6400] backdrop-blur-sm border border-white/10 hover:border-[#BE6400]/20'
                 }`}
-              />
-              {item.name}
-            </Link>
+              >
+                {/* Glow effect for active item */}
+                {item.current && (
+                  <motion.div
+                    className="absolute inset-0 bg-[#BE6400] opacity-40 blur-md"
+                    animate={{ opacity: [0.2, 0.4, 0.2] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  />
+                )}
+                
+                {/* Hover shimmer effect */}
+                <motion.div
+                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent"
+                  initial={{ x: '-100%', opacity: 0 }}
+                  whileHover={{ 
+                    x: '100%',
+                    opacity: 1,
+                    transition: { duration: 0.6 }
+                  }}
+                />
+                
+                <motion.div
+                  className="relative z-10 flex items-center w-full"
+                  whileHover={{ x: 4 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <IconComponent 
+                    className={`mr-4 h-5 w-5 transition-all duration-300 ${
+                      item.current 
+                        ? 'text-white drop-shadow-sm' 
+                        : 'text-neutral-600 group-hover:text-[#BE6400] group-hover:scale-110'
+                    }`}
+                  />
+                  <span className="relative">
+                    {item.name}
+                    {item.current && (
+                      <motion.div
+                        className="absolute -bottom-0.5 left-0 right-0 h-0.5 bg-white/30 rounded-full"
+                        layoutId="activeIndicator"
+                      />
+                    )}
+                  </span>
+                </motion.div>
+              </Link>
+            </motion.div>
           )
         })}
       </nav>
 
-      {/* User Profile */}
-      <div className="border-t border-neutral-700 p-4">
-        <div className="flex items-center space-x-3 mb-4">
-          <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-xl flex items-center justify-center">
-            <span className="text-white font-bold text-sm">
+      {/* Luxurious User Profile */}
+      <div className="relative border-t border-white/20 p-6 bg-gradient-to-br from-white/5 via-transparent to-[#BE6400]/5">
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gold-400/30 to-transparent" />
+        
+        <motion.div 
+          className="flex items-center space-x-4 mb-6"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+        >
+          <motion.div 
+            className="relative w-12 h-12 bg-luxury-gradient rounded-2xl flex items-center justify-center shadow-2xl ring-2 ring-white/30"
+            whileHover={{ scale: 1.1, rotate: 10 }}
+            transition={{ duration: 0.3 }}
+          >
+            {/* Avatar glow effect */}
+            <div className="absolute inset-0 bg-luxury-gradient rounded-2xl blur-lg opacity-50" />
+            <span className="relative z-10 text-[#BE6400] font-bold text-lg drop-shadow-sm">
               {userInfo.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
             </span>
-          </div>
+          </motion.div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-neutral-200 truncate">
+            <motion.p 
+              className="text-base font-bold bg-gradient-to-r from-neutral-800 via-[#BE6400] to-neutral-800 bg-clip-text text-transparent truncate"
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.7 }}
+            >
               {userInfo.name}
-            </p>
-            <p className="text-xs text-neutral-400 truncate">
+            </motion.p>
+            <motion.p 
+              className="text-sm text-[#BE6400] font-semibold truncate"
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.8 }}
+            >
               {userInfo.role}
-            </p>
+            </motion.p>
             {userInfo.department && (
-              <p className="text-xs text-neutral-500 truncate">
+              <motion.p 
+                className="text-xs text-neutral-600 truncate font-medium"
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.9 }}
+              >
                 {userInfo.department}
-              </p>
+              </motion.p>
             )}
           </div>
-        </div>
+        </motion.div>
         
-        <div className="space-y-1">
-          <button
+        <div className="space-y-2">
+          <motion.button
             onClick={() => {/* Settings functionality can be added later */}}
-            className="flex items-center w-full px-3 py-2 text-sm text-neutral-300 rounded-lg hover:bg-neutral-800 transition-colors"
+            className="group relative flex items-center w-full px-4 py-3 text-sm font-semibold text-neutral-700 rounded-2xl hover:bg-white/30 hover:text-[#BE6400] transition-all duration-300 backdrop-blur-sm border border-white/10 hover:border-[#BE6400]/20 hover:shadow-lg overflow-hidden"
+            whileHover={{ scale: 1.02, x: 4 }}
+            whileTap={{ scale: 0.98 }}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1.0 }}
           >
-            <Cog6ToothIcon className="w-4 h-4 mr-2 text-neutral-400" />
-            Settings
-          </button>
-          <button
+            <motion.div
+              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent"
+              initial={{ x: '-100%' }}
+              whileHover={{ x: '100%' }}
+              transition={{ duration: 0.6 }}
+            />
+            <Cog6ToothIcon className="w-5 h-5 mr-3 text-neutral-600 group-hover:text-[#BE6400] group-hover:rotate-90 transition-all duration-300" />
+            <span className="relative z-10">Settings</span>
+          </motion.button>
+          
+          <motion.button
             onClick={handleSignOut}
-            className="flex items-center w-full px-3 py-2 text-sm text-red-700 rounded-lg hover:bg-red-50 transition-colors"
+            className="group relative flex items-center w-full px-4 py-3 text-sm font-semibold text-red-600 rounded-2xl hover:bg-red-50/50 hover:text-red-700 transition-all duration-300 backdrop-blur-sm border border-red-100/20 hover:border-red-200/40 hover:shadow-lg overflow-hidden"
+            whileHover={{ scale: 1.02, x: 4 }}
+            whileTap={{ scale: 0.98 }}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1.1 }}
           >
-            <ArrowRightOnRectangleIcon className="w-4 h-4 mr-2 text-red-400" />
-            Sign out
-          </button>
+            <motion.div
+              className="absolute inset-0 bg-gradient-to-r from-transparent via-red-50/20 to-transparent"
+              initial={{ x: '-100%' }}
+              whileHover={{ x: '100%' }}
+              transition={{ duration: 0.6 }}
+            />
+            <ArrowRightOnRectangleIcon className="w-5 h-5 mr-3 text-red-400 group-hover:text-red-600 group-hover:translate-x-1 transition-all duration-300" />
+            <span className="relative z-10">Sign out</span>
+          </motion.button>
         </div>
       </div>
     </>
   )
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-neutral-900 via-neutral-800 to-neutral-900">
-      {/* Background pattern */}
+    <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-white to-[#BE6400]/5">
+      {/* Enhanced Background pattern with glassmorphism */}
       <div className="fixed inset-0 z-0">
-        <div className="absolute inset-0 bg-[url('/background02.png')] bg-cover bg-center opacity-5" />
-        <div className="absolute inset-0 bg-gradient-to-br from-primary-900/20 via-transparent to-secondary-900/20" />
+        <div 
+          className="absolute inset-0 bg-cover bg-center opacity-3"
+          style={{ backgroundImage: `url('${backgroundImage}')` }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-br from-green-500/3 via-white/60 to-red-500/3" />
+        <div className="absolute inset-0 bg-gradient-to-tr from-[#BE6400]/8 via-transparent to-black/2" />
+        <div className="absolute inset-0 backdrop-blur-[0.5px]" />
       </div>
 
       {/* Mobile sidebar overlay */}
@@ -186,7 +314,7 @@ const ModernLayout = ({ children, navigation, userInfo }: ModernLayoutProps) => 
             exit="closed"
           >
             <motion.div 
-              className="absolute inset-0 bg-neutral-900/50 backdrop-blur-sm"
+              className="absolute inset-0 bg-white/15 backdrop-blur-xl border border-white/20 shadow-2xl"
               onClick={() => setSidebarOpen(false)}
             />
           </motion.div>
@@ -203,8 +331,13 @@ const ModernLayout = ({ children, navigation, userInfo }: ModernLayoutProps) => 
             animate="open"
             exit="closed"
           >
-            <div className="flex h-full flex-col bg-neutral-900 shadow-xl border-r border-neutral-700">
-              <SidebarContent />
+            <div className="flex h-full flex-col bg-white/85 backdrop-blur-xl shadow-2xl border-r border-white/30 relative">
+              {/* Subtle Kenyan flag accent */}
+              <div className="absolute inset-0 bg-gradient-to-br from-green-500/2 via-transparent to-red-500/2" />
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-green-600 via-[#BE6400] to-red-600" />
+              <div className="relative z-10">
+                <SidebarContent />
+              </div>
             </div>
           </motion.div>
         )}
@@ -212,51 +345,102 @@ const ModernLayout = ({ children, navigation, userInfo }: ModernLayoutProps) => 
 
       {/* Desktop sidebar */}
       <div className="hidden lg:block fixed inset-y-0 left-0 z-30 w-64">
-        <div className="flex h-full flex-col bg-neutral-900/95 backdrop-blur-sm shadow-xl border-r border-neutral-700">
-          <SidebarContent />
+        <div className="flex h-full flex-col bg-white/85 backdrop-blur-xl shadow-2xl border-r border-white/30 relative">
+          {/* Subtle Kenyan flag accent */}
+          <div className="absolute inset-0 bg-gradient-to-br from-green-500/2 via-transparent to-red-500/2" />
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-green-600 via-[#BE6400] to-red-600" />
+          <div className="relative z-10">
+            <SidebarContent />
+          </div>
         </div>
       </div>
 
       {/* Main content area */}
       <div className="lg:pl-64">
-        {/* Top bar */}
-        <div className="sticky top-0 z-30 flex h-16 items-center gap-x-4 border-b border-neutral-700 bg-neutral-900/80 backdrop-blur-sm px-4 shadow-sm sm:px-6 lg:px-8">
-          <button
-            type="button"
-            onClick={() => setSidebarOpen(true)}
-            className="lg:hidden p-2 rounded-lg text-neutral-400 hover:bg-neutral-800 transition-colors"
-          >
-            <Bars3Icon className="h-6 w-6" />
-          </button>
+        {/* Floating Luxurious Top bar */}
+        <motion.div 
+          className="sticky top-4 z-30 mx-4 flex h-20 items-center gap-x-4 border border-white/30 bg-white/90 backdrop-blur-2xl px-4 shadow-2xl sm:px-6 lg:px-8 relative rounded-3xl"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          {/* Premium background overlay */}
+          <div className="absolute inset-0 bg-gradient-to-r from-white/10 via-[#BE6400]/5 to-white/10 rounded-3xl" />
+          <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-green-600/30 via-[#BE6400]/50 to-red-600/30 rounded-b-3xl" />
+          <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-white/50 to-transparent rounded-t-3xl" />
+          
+          <div className="relative z-10 flex items-center w-full">
+            <motion.button
+              type="button"
+              onClick={() => setSidebarOpen(true)}
+              className="lg:hidden p-3 rounded-2xl bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/20 text-neutral-700 hover:text-[#BE6400] transition-all duration-300 hover:shadow-lg hover:scale-105"
+              whileHover={{ rotate: 90 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <Bars3Icon className="h-5 w-5" />
+            </motion.button>
 
-          <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
-            <div className="flex flex-1 items-center">
-              <h1 className="text-lg font-semibold text-primary-400">
-                Dashboard
-              </h1>
-            </div>
-            <div className="flex items-center gap-x-4 lg:gap-x-6">
-              {/* Notification bell could go here */}
-              <div className="hidden lg:block lg:h-6 lg:w-px lg:bg-neutral-600" />
+            <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6 items-center">
+              <div className="flex flex-1 items-center">
+                <motion.h1 
+                  className="text-2xl font-bold bg-gradient-to-r from-black via-[#BE6400] to-black bg-clip-text text-transparent"
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.2 }}
+                >
+                  {pageTitle}
+                </motion.h1>
+              </div>
               
-              {/* User menu */}
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-luxury-gradient rounded-lg flex items-center justify-center shadow-md">
-                  <span className="text-neutral-800 font-bold text-xs">
-                    {userInfo.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                  </span>
-                </div>
-                <div className="hidden sm:block">
-                  <p className="text-sm font-semibold text-neutral-200">{userInfo.name}</p>
-                  <p className="text-xs text-neutral-400">{userInfo.role}</p>
-                </div>
+              <div className="flex items-center gap-x-4 lg:gap-x-6">
+                {/* Elegant separator */}
+                <div className="hidden lg:block lg:h-8 lg:w-px bg-gradient-to-b from-transparent via-[#BE6400]/30 to-transparent" />
+                
+                {/* Luxurious User menu */}
+                <motion.div 
+                  className="flex items-center space-x-4 px-4 py-2 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30 shadow-lg hover:shadow-xl transition-all duration-300"
+                  whileHover={{ scale: 1.02, y: -1 }}
+                  initial={{ opacity: 0, x: 10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.3 }}
+                >
+                  <motion.div 
+                    className="relative w-10 h-10 bg-luxury-gradient rounded-2xl flex items-center justify-center shadow-xl ring-1 ring-white/30"
+                    whileHover={{ scale: 1.1, rotate: 5 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    {/* Avatar glow */}
+                    <div className="absolute inset-0 bg-luxury-gradient rounded-2xl blur-md opacity-50" />
+                    <span className="relative z-10 text-[#BE6400] font-bold text-sm drop-shadow-sm">
+                      {userInfo.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                    </span>
+                  </motion.div>
+                  <div className="hidden sm:block">
+                    <motion.p 
+                      className="text-sm font-bold bg-gradient-to-r from-neutral-800 via-[#BE6400] to-neutral-800 bg-clip-text text-transparent"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.4 }}
+                    >
+                      {userInfo.name}
+                    </motion.p>
+                    <motion.p 
+                      className="text-xs text-[#BE6400] font-semibold"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.5 }}
+                    >
+                      {userInfo.role}
+                    </motion.p>
+                  </div>
+                </motion.div>
               </div>
             </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Page content with background */}
-        <main className="relative z-10 py-6 px-4 sm:px-6 lg:px-8">
+        <main className="relative z-10 py-6 px-4 sm:px-6 lg:px-8 mt-4">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

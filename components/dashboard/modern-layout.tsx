@@ -70,7 +70,7 @@ const ModernLayout = ({ children, navigation, userInfo }: ModernLayoutProps) => 
             exit="closed"
           >
             <motion.div 
-              className="absolute inset-0 bg-neutral-900/50 backdrop-blur-sm"
+              className="absolute inset-0 bg-white/20 backdrop-blur-lg border border-white/30 shadow-lg"
               onClick={() => setSidebarOpen(false)}
             />
           </motion.div>
@@ -143,7 +143,7 @@ const ModernLayout = ({ children, navigation, userInfo }: ModernLayoutProps) => 
                 >
                   <IconComponent 
                     className={`mr-3 h-5 w-5 transition-colors ${
-                      item.current ? 'text-primary-500' : 'text-neutral-400 group-hover:text-neutral-600'
+                      item.current ? 'text-primary-500' : 'text-neutral-600 group-hover:text-neutral-700'
                     }`}
                   />
                   {item.name}
@@ -180,7 +180,7 @@ const ModernLayout = ({ children, navigation, userInfo }: ModernLayoutProps) => 
                 href="/settings"
                 className="flex items-center px-3 py-2 text-sm text-neutral-700 rounded-lg hover:bg-neutral-100 transition-colors"
               >
-                <Cog6ToothIcon className="w-4 h-4 mr-2 text-neutral-400" />
+                <Cog6ToothIcon className="w-4 h-4 mr-2 text-neutral-600" />
                 Settings
               </Link>
               <Link

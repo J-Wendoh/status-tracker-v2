@@ -1,13 +1,12 @@
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
-import { OfficerDashboard } from "@/components/dashboard/officer-dashboard-enhanced"
+import { OfficerActivitiesPage } from "@/components/dashboard/officer-activities-page"
 import { Suspense } from "react"
 import { LoadingScreen } from "@/components/ui/loading-screen"
 
-// Force dynamic rendering - no caching
 export const dynamic = 'force-dynamic'
 
-export default async function OfficerDashboardPage() {
+export default async function OfficerActivitiesRoute() {
   const supabase = await createClient()
 
   const {
@@ -31,20 +30,11 @@ export default async function OfficerDashboardPage() {
     .eq("id", user.id)
     .single()
 
-  console.log("[v0] Officer - User profile query result:", {
-    userProfile,
-    profileError: profileError?.message,
-    hasProfile: !!userProfile,
-    hasDepartmentSaga: !!userProfile?.departments_sagas,
-  })
-
   if (profileError || !userProfile) {
-    console.log("[v0] Officer - Profile error or missing profile, redirecting to dashboard")
     redirect("/dashboard")
   }
 
   if (userProfile.category !== "Officer") {
-    console.log("[v0] Officer - User category is not Officer:", userProfile.category)
     redirect("/dashboard")
   }
 
@@ -53,13 +43,6 @@ export default async function OfficerDashboardPage() {
     .select("*")
     .eq("department_saga_id", userProfile.department_saga_id)
     .order("name")
-
-  console.log("[v0] Officer - Services query result:", {
-    services,
-    servicesError: servicesError?.message,
-    servicesCount: services?.length || 0,
-    departmentSagaId: userProfile.department_saga_id,
-  })
 
   const { data: activities, error: activitiesError } = await supabase
     .from("activities")
@@ -78,21 +61,13 @@ export default async function OfficerDashboardPage() {
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
 
-  console.log("[v0] Officer - Activities query result:", {
-    activities,
-    activitiesError: activitiesError?.message,
-    activitiesCount: activities?.length || 0,
-  })
-
-  // Ensure we have the minimum required data
   if (!userProfile.departments_sagas) {
-    console.log("[v0] Officer - Missing department/saga data, redirecting to dashboard")
     redirect("/dashboard")
   }
 
   return (
-    <Suspense fallback={<LoadingScreen isLoading={true} message="Loading officer dashboard..." />}>
-      <OfficerDashboard user={userProfile} services={services || []} activities={activities || []} />
+    <Suspense fallback={<LoadingScreen isLoading={true} message="Loading activities..." />}>
+      <OfficerActivitiesPage user={userProfile} services={services || []} activities={activities || []} />
     </Suspense>
   )
 }

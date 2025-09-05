@@ -53,7 +53,7 @@ export function OfficerDashboard({ user, services, activities }: OfficerDashboar
 
   const navigation = [
     { name: 'Dashboard', href: '/dashboard/officer', icon: HomeIcon, current: true },
-    { name: 'Activities', href: '/dashboard/officer', icon: DocumentTextIcon, current: false },
+    { name: 'Activities', href: '/dashboard/officer/activities', icon: DocumentTextIcon, current: false },
     { name: 'Analytics', href: '/dashboard/officer', icon: ChartBarIcon, current: false },
   ]
 
@@ -64,7 +64,12 @@ export function OfficerDashboard({ user, services, activities }: OfficerDashboar
   }
 
   return (
-    <ModernLayout navigation={navigation} userInfo={userInfo}>
+    <ModernLayout 
+      navigation={navigation} 
+      userInfo={userInfo}
+      backgroundImage="/background02.png"
+      pageTitle="Officer Dashboard"
+    >
       <div className="space-y-6">
         {/* Welcome Section */}
         <motion.div
@@ -73,12 +78,12 @@ export function OfficerDashboard({ user, services, activities }: OfficerDashboar
           transition={{ duration: 0.5 }}
           className="mb-12 relative"
         >
-          {/* Floating background elements */}
+          {/* Enhanced floating background elements with Kenyan flag colors */}
           <motion.div
-            className="absolute -top-4 -left-4 w-32 h-32 bg-primary-100/50 rounded-full blur-3xl"
+            className="absolute -top-4 -left-4 w-32 h-32 bg-gradient-to-br from-green-300/30 via-[#BE6400]/20 to-red-300/30 rounded-full blur-3xl"
             animate={{ 
               scale: [1, 1.2, 1],
-              opacity: [0.3, 0.6, 0.3]
+              opacity: [0.2, 0.4, 0.2]
             }}
             transition={{ 
               duration: 4,
@@ -87,10 +92,10 @@ export function OfficerDashboard({ user, services, activities }: OfficerDashboar
             }}
           />
           <motion.div
-            className="absolute -bottom-6 -right-8 w-24 h-24 bg-gold-200/40 rounded-full blur-2xl"
+            className="absolute -bottom-6 -right-8 w-24 h-24 bg-gradient-to-br from-red-200/30 via-white/40 to-green-200/30 rounded-full blur-2xl"
             animate={{ 
               scale: [1.2, 1, 1.2],
-              opacity: [0.4, 0.7, 0.4]
+              opacity: [0.3, 0.5, 0.3]
             }}
             transition={{ 
               duration: 3,
@@ -99,10 +104,23 @@ export function OfficerDashboard({ user, services, activities }: OfficerDashboar
               delay: 1
             }}
           />
+          <motion.div
+            className="absolute -top-8 -right-4 w-16 h-16 bg-[#BE6400]/20 rounded-full blur-xl"
+            animate={{ 
+              scale: [1, 1.3, 1],
+              opacity: [0.2, 0.4, 0.2]
+            }}
+            transition={{ 
+              duration: 5,
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay: 2
+            }}
+          />
           
           <div className="relative z-10">
             <motion.h1 
-              className="text-display-md font-bold bg-gradient-to-r from-neutral-900 via-primary-700 to-neutral-800 bg-clip-text text-transparent mb-3"
+              className="text-display-md font-bold text-neutral-900 mb-3"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
@@ -123,7 +141,7 @@ export function OfficerDashboard({ user, services, activities }: OfficerDashboar
                 />
                 {user.departments_sagas?.name}
               </span>
-              <span className="mx-2 text-neutral-400">•</span>
+              <span className="mx-2 text-neutral-500">•</span>
               <span className="text-primary-600 font-semibold">{user.county} County</span>
             </motion.p>
           </div>
@@ -245,21 +263,6 @@ export function OfficerDashboard({ user, services, activities }: OfficerDashboar
           </div>
         </motion.div>
 
-        {/* Recent Activities */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.6 }}
-          className="bg-white rounded-2xl p-6 border border-neutral-200 shadow-card"
-        >
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-neutral-900">Recent Activities</h2>
-            <button className="text-primary-500 hover:text-primary-600 font-medium text-sm transition-colors">
-              View All
-            </button>
-          </div>
-          <ActivityList activities={activities.slice(0, 5)} />
-        </motion.div>
       </div>
 
       {/* Activity Form Modal */}
@@ -268,7 +271,7 @@ export function OfficerDashboard({ user, services, activities }: OfficerDashboar
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-white/20 backdrop-blur-lg flex items-center justify-center p-4"
           onClick={() => setShowActivityForm(false)}
         >
           <motion.div
