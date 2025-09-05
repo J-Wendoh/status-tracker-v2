@@ -1,8 +1,6 @@
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { OfficerDashboard } from "@/components/dashboard/officer-dashboard-enhanced"
-import { Suspense } from "react"
-import { LoadingScreen } from "@/components/ui/loading-screen"
 
 // Force dynamic rendering - no caching
 export const dynamic = 'force-dynamic'
@@ -90,9 +88,5 @@ export default async function OfficerDashboardPage() {
     redirect("/dashboard")
   }
 
-  return (
-    <Suspense fallback={<LoadingScreen isLoading={true} message="Loading officer dashboard..." />}>
-      <OfficerDashboard user={userProfile} services={services || []} activities={activities || []} />
-    </Suspense>
-  )
+  return <OfficerDashboard user={userProfile} services={services || []} activities={activities || []} />
 }

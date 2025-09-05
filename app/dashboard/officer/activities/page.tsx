@@ -1,8 +1,6 @@
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { OfficerActivitiesPage } from "@/components/dashboard/officer-activities-page"
-import { Suspense } from "react"
-import { LoadingScreen } from "@/components/ui/loading-screen"
 
 export const dynamic = 'force-dynamic'
 
@@ -65,9 +63,5 @@ export default async function OfficerActivitiesRoute() {
     redirect("/dashboard")
   }
 
-  return (
-    <Suspense fallback={<LoadingScreen isLoading={true} message="Loading activities..." />}>
-      <OfficerActivitiesPage user={userProfile} services={services || []} activities={activities || []} />
-    </Suspense>
-  )
+  return <OfficerActivitiesPage user={userProfile} services={services || []} activities={activities || []} />
 }

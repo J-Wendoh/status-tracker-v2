@@ -1,8 +1,6 @@
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { HodDashboard } from "@/components/dashboard/hod-dashboard-enhanced"
-import { Suspense } from "react"
-import { LoadingScreen } from "@/components/ui/loading-screen"
 
 export default async function HodDashboardPage() {
   const timestamp = new Date().toISOString()
@@ -173,13 +171,11 @@ export default async function HodDashboardPage() {
   }
 
   return (
-    <Suspense fallback={<LoadingScreen isLoading={true} message="Loading HOD dashboard..." />}>
-      <HodDashboard
-        user={userProfile}
-        activities={activitiesWithDetails || []}
-        officers={officers || []}
-        services={services || []}
-      />
-    </Suspense>
+    <HodDashboard
+      user={userProfile}
+      activities={activitiesWithDetails || []}
+      officers={officers || []}
+      services={services || []}
+    />
   )
 }
