@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
-import { HodDashboard } from "@/components/dashboard/hod-dashboard"
+import { HodDashboard } from "@/components/dashboard/hod-dashboard-enhanced"
 
 export default async function HodDashboardPage() {
   const timestamp = new Date().toISOString()

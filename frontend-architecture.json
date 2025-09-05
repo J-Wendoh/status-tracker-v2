@@ -1,0 +1,554 @@
+{
+  "project": {
+    "name": "OAG Activity Tracking System",
+    "description": "Government office activity tracking and reporting system for Office of Attorney General (OAG)",
+    "tech_stack": {
+      "framework": "Next.js 14.2.16",
+      "ui_library": "React 18",
+      "styling": "Tailwind CSS",
+      "components": "Radix UI / Shadcn UI",
+      "backend": "Supabase (PostgreSQL)",
+      "authentication": "Supabase Auth"
+    }
+  },
+  "database_tables": {
+    "users": {
+      "description": "User profiles and authentication data",
+      "fields": ["id", "email", "full_name", "county", "category", "department_saga_id", "created_at"]
+    },
+    "departments_sagas": {
+      "description": "Departments and Semi-Autonomous Government Agencies",
+      "fields": ["id", "name", "type"]
+    },
+    "services": {
+      "description": "Services provided by departments/SAGAs",
+      "fields": ["id", "name", "description", "department_saga_id"]
+    },
+    "activities": {
+      "description": "Activity logs submitted by officers",
+      "fields": ["id", "user_id", "service_id", "description", "challenges", "created_at"]
+    },
+    "activity_status": {
+      "description": "Status tracking for activities",
+      "fields": ["id", "activity_id", "pending_count", "completed_count", "updated_by", "created_at"]
+    }
+  },
+  "pages": [
+    {
+      "path": "/",
+      "name": "Home/Landing Page",
+      "type": "Server Component",
+      "description": "Initial landing page that redirects users based on authentication status",
+      "content": {
+        "authenticated": "Redirects to /dashboard",
+        "unauthenticated": "Redirects to /auth/login"
+      },
+      "api_endpoints": [
+        {
+          "type": "supabase.auth",
+          "method": "getUser",
+          "purpose": "Check if user is logged in"
+        }
+      ],
+      "ui_elements": [],
+      "user_flow": "Entry point → Check auth → Redirect to appropriate page"
+    },
+    {
+      "path": "/auth/login",
+      "name": "Login Page",
+      "type": "Client Component",
+      "description": "User authentication page for existing users",
+      "content": {
+        "header": "OAG Activity System",
+        "subheader": "Sign in to your account to access the activity logging system",
+        "form_fields": [
+          {
+            "name": "email",
+            "type": "email",
+            "placeholder": "your.email@oag.go.ke",
+            "required": true
+          },
+          {
+            "name": "password",
+            "type": "password",
+            "required": true
+          }
+        ],
+        "actions": ["Sign In", "Link to Register"]
+      },
+      "api_endpoints": [
+        {
+          "type": "supabase.auth",
+          "method": "signInWithPassword",
+          "purpose": "Authenticate user credentials"
+        }
+      ],
+      "ui_elements": ["Card", "Form", "Input fields", "Button", "Error messages"],
+      "user_flow": "Enter credentials → Submit → Validate → Redirect to dashboard or show error"
+    },
+    {
+      "path": "/auth/register",
+      "name": "Registration Page",
+      "type": "Client Component",
+      "description": "New user registration with comprehensive profile setup",
+      "content": {
+        "header": "Register for OAG System",
+        "subheader": "Create your account to access the activity logging system",
+        "form_fields": [
+          {
+            "name": "email",
+            "type": "email",
+            "placeholder": "your.email@oag.go.ke",
+            "required": true
+          },
+          {
+            "name": "full_name",
+            "type": "text",
+            "placeholder": "John Doe",
+            "required": true
+          },
+          {
+            "name": "id_number",
+            "type": "text",
+            "placeholder": "12345678",
+            "required": true
+          },
+          {
+            "name": "county",
+            "type": "select",
+            "options": "47 Kenyan counties",
+            "required": true
+          },
+          {
+            "name": "category",
+            "type": "select",
+            "options": ["Department", "SAGA"],
+            "required": true
+          },
+          {
+            "name": "department_or_saga",
+            "type": "select",
+            "options": "Dynamic based on category selection",
+            "required": true
+          },
+          {
+            "name": "password",
+            "type": "password",
+            "required": true,
+            "validation": "min 6 characters"
+          },
+          {
+            "name": "confirm_password",
+            "type": "password",
+            "required": true,
+            "validation": "must match password"
+          }
+        ],
+        "actions": ["Register", "Link to Login"]
+      },
+      "api_endpoints": [
+        {
+          "type": "supabase.from",
+          "table": "departments_sagas",
+          "method": "select",
+          "purpose": "Fetch available departments and SAGAs"
+        },
+        {
+          "type": "supabase.auth",
+          "method": "signUp",
+          "purpose": "Create authentication account"
+        },
+        {
+          "type": "server_action",
+          "method": "createUserProfile",
+          "purpose": "Create user profile in database"
+        }
+      ],
+      "ui_elements": ["Card", "Form", "Multiple Input fields", "Select dropdowns", "Button", "Validation messages"],
+      "user_flow": "Fill form → Select category → Choose department/SAGA → Submit → Create account → Redirect to check-email"
+    },
+    {
+      "path": "/auth/check-email",
+      "name": "Email Verification Page",
+      "type": "Server Component",
+      "description": "Confirmation page after registration",
+      "content": {
+        "header": "Check your email",
+        "message": "We've sent you a confirmation link to complete your registration",
+        "instruction": "Please check your email and click the confirmation link to activate your account",
+        "actions": ["Back to Sign In"]
+      },
+      "api_endpoints": [],
+      "ui_elements": ["Card", "Icon (Mail)", "Text content", "Button"],
+      "user_flow": "Registration complete → Show confirmation → User checks email"
+    },
+    {
+      "path": "/dashboard",
+      "name": "Dashboard Router",
+      "type": "Server Component",
+      "description": "Main dashboard that routes users to role-specific dashboards based on their category",
+      "content": {
+        "purpose": "Determines user role and redirects accordingly",
+        "routing_logic": {
+          "Officer": "/dashboard/officer",
+          "HOD": "/dashboard/hod",
+          "CEO": "/dashboard/hod",
+          "AG": "/dashboard/ag"
+        }
+      },
+      "api_endpoints": [
+        {
+          "type": "supabase.auth",
+          "method": "getUser",
+          "purpose": "Get current user"
+        },
+        {
+          "type": "supabase.from",
+          "table": "users",
+          "method": "select",
+          "purpose": "Fetch user profile with category"
+        }
+      ],
+      "ui_elements": [],
+      "user_flow": "Check auth → Get user profile → Determine category → Redirect to appropriate dashboard"
+    },
+    {
+      "path": "/dashboard/officer",
+      "name": "Officer Dashboard",
+      "type": "Server Component + Client Components",
+      "description": "Dashboard for officers to log activities and view their submissions",
+      "content": {
+        "header": "Officer Dashboard",
+        "sections": [
+          {
+            "name": "Welcome Section",
+            "content": "Personalized greeting with officer name and department/SAGA"
+          },
+          {
+            "name": "Quick Stats",
+            "content": "Overview cards showing pending and completed activities"
+          },
+          {
+            "name": "Activity Logging Form",
+            "content": "Form to submit new activities with service selection and details"
+          },
+          {
+            "name": "Recent Activities",
+            "content": "Table showing officer's recent activity submissions with status"
+          }
+        ],
+        "features": [
+          "Submit new activities",
+          "View activity history",
+          "Track pending/completed status",
+          "View departmental services"
+        ]
+      },
+      "api_endpoints": [
+        {
+          "type": "supabase.auth",
+          "method": "getUser",
+          "purpose": "Authenticate user"
+        },
+        {
+          "type": "supabase.from",
+          "table": "users",
+          "method": "select (with joins)",
+          "purpose": "Get user profile with department info"
+        },
+        {
+          "type": "supabase.from",
+          "table": "services",
+          "method": "select",
+          "purpose": "Get services for officer's department"
+        },
+        {
+          "type": "supabase.from",
+          "table": "activities",
+          "method": "select (with joins)",
+          "purpose": "Get officer's activities with status"
+        },
+        {
+          "type": "supabase.from",
+          "table": "activities",
+          "method": "insert",
+          "purpose": "Submit new activity"
+        }
+      ],
+      "ui_elements": [
+        "Dashboard layout",
+        "Stat cards",
+        "Activity form (Dialog)",
+        "Data tables",
+        "Select dropdowns",
+        "Textarea",
+        "Buttons"
+      ],
+      "user_flow": "View dashboard → Check stats → Submit activity → View history"
+    },
+    {
+      "path": "/dashboard/hod",
+      "name": "HOD/CEO Dashboard",
+      "type": "Server Component + Client Components",
+      "description": "Dashboard for Heads of Department and CEOs to review and manage department activities",
+      "content": {
+        "header": "Department Head Dashboard",
+        "sections": [
+          {
+            "name": "Department Overview",
+            "content": "Stats showing total activities, pending reviews, officers count"
+          },
+          {
+            "name": "Activities Review Section",
+            "content": "Table with all department activities requiring review"
+          },
+          {
+            "name": "Officers List",
+            "content": "List of all officers in the department with their activity counts"
+          },
+          {
+            "name": "Services Management",
+            "content": "View all department services and their usage"
+          }
+        ],
+        "features": [
+          "Review officer activities",
+          "Update activity status (pending/completed counts)",
+          "View department statistics",
+          "Monitor officer performance",
+          "Filter activities by date/officer/service"
+        ]
+      },
+      "api_endpoints": [
+        {
+          "type": "supabase.auth",
+          "method": "getUser",
+          "purpose": "Authenticate user"
+        },
+        {
+          "type": "supabase.from",
+          "table": "users",
+          "method": "select",
+          "purpose": "Get HOD profile and department"
+        },
+        {
+          "type": "supabase.from",
+          "table": "services",
+          "method": "select",
+          "purpose": "Get department services"
+        },
+        {
+          "type": "supabase.from",
+          "table": "activities",
+          "method": "select (complex joins)",
+          "purpose": "Get all department activities with officer details"
+        },
+        {
+          "type": "supabase.from",
+          "table": "activity_status",
+          "method": "select",
+          "purpose": "Get activity status history"
+        },
+        {
+          "type": "supabase.from",
+          "table": "users",
+          "method": "select",
+          "purpose": "Get department officers list"
+        },
+        {
+          "type": "supabase.from",
+          "table": "activity_status",
+          "method": "insert",
+          "purpose": "Update activity review status"
+        }
+      ],
+      "ui_elements": [
+        "Dashboard layout",
+        "Statistics cards",
+        "Data tables with filters",
+        "Review dialog/modal",
+        "Status update forms",
+        "Search and filter controls",
+        "Tabs for different views"
+      ],
+      "user_flow": "View overview → Review activities → Update status → Monitor progress"
+    },
+    {
+      "path": "/dashboard/ag",
+      "name": "Attorney General Dashboard",
+      "type": "Server Component + Client Components",
+      "description": "High-level dashboard for Attorney General to monitor all departments and SAGAs",
+      "content": {
+        "header": "Attorney General Dashboard",
+        "sections": [
+          {
+            "name": "System Overview",
+            "content": "High-level statistics across all departments and SAGAs"
+          },
+          {
+            "name": "Department/SAGA Analytics",
+            "content": "Charts and visualizations showing activity trends and performance"
+          },
+          {
+            "name": "Department View",
+            "content": "Detailed view of each department/SAGA with activities and officers"
+          },
+          {
+            "name": "All Activities",
+            "content": "Comprehensive list of all system activities with advanced filtering"
+          },
+          {
+            "name": "Officers Directory",
+            "content": "Complete list of all officers across the system"
+          }
+        ],
+        "features": [
+          "System-wide analytics",
+          "Department performance comparison",
+          "Activity trend analysis",
+          "Officer performance metrics",
+          "Export reports",
+          "Advanced filtering and search"
+        ]
+      },
+      "api_endpoints": [
+        {
+          "type": "supabase.auth",
+          "method": "getUser",
+          "purpose": "Authenticate AG user"
+        },
+        {
+          "type": "supabase.from",
+          "table": "users",
+          "method": "select",
+          "purpose": "Verify AG role"
+        },
+        {
+          "type": "supabase.from",
+          "table": "departments_sagas",
+          "method": "select",
+          "purpose": "Get all departments and SAGAs"
+        },
+        {
+          "type": "supabase.from",
+          "table": "activities",
+          "method": "select (with complex joins)",
+          "purpose": "Get all system activities with full details"
+        },
+        {
+          "type": "supabase.from",
+          "table": "users",
+          "method": "select (with joins)",
+          "purpose": "Get all officers with department info"
+        },
+        {
+          "type": "supabase.from",
+          "table": "services",
+          "method": "select",
+          "purpose": "Get all services across departments"
+        },
+        {
+          "type": "supabase.from",
+          "table": "activity_status",
+          "method": "select",
+          "purpose": "Get activity status for analytics"
+        }
+      ],
+      "ui_elements": [
+        "Complex dashboard layout",
+        "Analytics charts (Recharts)",
+        "Multiple data tables",
+        "Tab navigation",
+        "Advanced filters",
+        "Export buttons",
+        "Department cards",
+        "Performance metrics",
+        "Search functionality"
+      ],
+      "user_flow": "View system overview → Analyze department performance → Drill down to specific activities → Export reports"
+    }
+  ],
+  "user_roles": {
+    "Officer": {
+      "description": "Regular staff members who submit activity reports",
+      "permissions": ["Submit activities", "View own activities", "View department services"],
+      "dashboard": "/dashboard/officer"
+    },
+    "HOD": {
+      "description": "Head of Department",
+      "permissions": ["Review activities", "Update activity status", "View all department activities", "Monitor officers"],
+      "dashboard": "/dashboard/hod"
+    },
+    "CEO": {
+      "description": "Chief Executive Officer of SAGA",
+      "permissions": ["Same as HOD for their SAGA"],
+      "dashboard": "/dashboard/hod"
+    },
+    "AG": {
+      "description": "Attorney General",
+      "permissions": ["View all system data", "Monitor all departments", "Access analytics", "Export reports"],
+      "dashboard": "/dashboard/ag"
+    }
+  },
+  "key_features": {
+    "authentication": {
+      "provider": "Supabase Auth",
+      "methods": ["Email/Password"],
+      "features": ["Email verification", "Session management", "Role-based access"]
+    },
+    "activity_management": {
+      "submission": "Officers submit daily activities with service selection and details",
+      "review": "HODs/CEOs review and update activity status",
+      "tracking": "Real-time tracking of pending vs completed activities",
+      "history": "Complete audit trail of all activities"
+    },
+    "reporting": {
+      "dashboards": "Role-specific dashboards with relevant metrics",
+      "analytics": "Visual charts and trends for AG dashboard",
+      "filtering": "Advanced filtering by date, department, officer, service",
+      "export": "Data export capabilities for reports"
+    }
+  },
+  "ui_components": {
+    "design_system": "Shadcn UI (Radix UI primitives with Tailwind)",
+    "common_components": [
+      "Cards for data display",
+      "Tables with sorting and filtering",
+      "Forms with validation",
+      "Dialogs/Modals for actions",
+      "Select dropdowns",
+      "Date pickers",
+      "Charts (Recharts)",
+      "Tabs for navigation",
+      "Buttons with loading states",
+      "Toast notifications"
+    ]
+  },
+  "improvements_needed": {
+    "ui_ux": [
+      "Modern, clean design with better visual hierarchy",
+      "Responsive design for mobile devices",
+      "Better loading states and animations",
+      "Improved data visualization",
+      "Consistent color scheme and branding",
+      "Better error handling and user feedback"
+    ],
+    "features": [
+      "Bulk activity submission",
+      "Activity templates for common tasks",
+      "Notifications system",
+      "Comments/notes on activities",
+      "File attachments for activities",
+      "Activity deadlines and reminders",
+      "Performance metrics and KPIs",
+      "Report generation and scheduling"
+    ],
+    "technical": [
+      "Offline capability",
+      "Real-time updates (WebSockets)",
+      "Better caching strategies",
+      "Optimized queries",
+      "Progressive Web App features"
+    ]
+  }
+}

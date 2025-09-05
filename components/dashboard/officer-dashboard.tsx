@@ -1,15 +1,23 @@
 "use client"
 
 import { useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Badge } from "@/components/ui/badge"
-import { LogOut, Plus, FileText, Calendar, UserIcon, Building } from "lucide-react"
+import { motion } from "framer-motion"
+import { 
+  PlusIcon, 
+  DocumentTextIcon, 
+  ClockIcon, 
+  CheckCircleIcon,
+  HomeIcon,
+  UserGroupIcon,
+  ChartBarIcon,
+  Cog6ToothIcon
+} from "@heroicons/react/24/outline"
 import { ActivityForm } from "./activity-form"
 import { ActivityList } from "./activity-list"
-import { createClient } from "@/lib/supabase/client"
-import { useRouter } from "next/navigation"
+import ModernLayout from "./modern-layout"
+import KPICard from "./KPICard"
+import { EnhancedKPICard } from "../ui/enhanced-kpi-card"
+import { CardSkeleton, LoadingDots } from "../ui/loading"
 import type { Service, Activity } from "@/lib/supabase/types"
 import type { UserWithDepartmentSaga } from "@/lib/supabase/types"
 
@@ -30,14 +38,7 @@ interface OfficerDashboardProps {
 }
 
 export function OfficerDashboard({ user, services, activities }: OfficerDashboardProps) {
-  const [activeTab, setActiveTab] = useState("log-activity")
-  const router = useRouter()
-
-  const handleSignOut = async () => {
-    const supabase = createClient()
-    await supabase.auth.signOut()
-    router.push("/auth/login")
-  }
+  const [showActivityForm, setShowActivityForm] = useState(false)
 
   const totalActivities = activities?.length || 0
   const pendingActivities = activities?.filter(
@@ -50,124 +51,253 @@ export function OfficerDashboard({ user, services, activities }: OfficerDashboar
     activity.activity_status?.some((status) => status?.completed_count > 0),
   ).length || 0
 
+  const navigation = [
+    { name: 'Dashboard', href: '/dashboard/officer', icon: HomeIcon, current: true },
+    { name: 'Activities', href: '/dashboard/officer/activities', icon: DocumentTextIcon, current: false },
+    { name: 'Analytics', href: '/dashboard/officer/analytics', icon: ChartBarIcon, current: false },
+  ]
+
+  const userInfo = {
+    name: user.full_name,
+    role: 'Officer',
+    department: user.departments_sagas?.name
+  }
+
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b bg-card">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <Building className="h-6 w-6 text-primary" />
-                <h1 className="text-xl font-semibold">OAG Activity System</h1>
-              </div>
-              <Badge variant="secondary">Officer Dashboard</Badge>
-            </div>
-            <Button variant="outline" onClick={handleSignOut} className="gap-2 bg-transparent">
-              <LogOut className="h-4 w-4" />
-              Sign Out
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      <div className="container mx-auto px-4 py-6">
+    <ModernLayout navigation={navigation} userInfo={userInfo}>
+      <div className="space-y-6">
         {/* Welcome Section */}
-        <div className="mb-6">
-          <div className="flex items-center gap-3 mb-2">
-            <UserIcon className="h-5 w-5 text-muted-foreground" />
-            <h2 className="text-2xl font-semibold">Welcome, {user.full_name}</h2>
-          </div>
-          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-            <span>ID: {user.id}</span>
-            <span>County: {user.county}</span>
-            {user.departments_sagas && (
-              <span>
-                {user.departments_sagas.type === "Department" ? "Department" : "SAGA"}: {user.departments_sagas.name}
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Activities</CardTitle>
-              <FileText className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{totalActivities}</div>
-              <p className="text-xs text-muted-foreground">Activities logged to date</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Pending Review</CardTitle>
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-orange-600">{pendingActivities}</div>
-              <p className="text-xs text-muted-foreground">Awaiting HOD/CEO review</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Completed</CardTitle>
-              <Badge className="h-4 w-4 rounded-full bg-green-100 text-green-800" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">{completedActivities}</div>
-              <p className="text-xs text-muted-foreground">Activities completed</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Main Content */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="log-activity" className="gap-2">
-              <Plus className="h-4 w-4" />
-              Log Activity
-            </TabsTrigger>
-            <TabsTrigger value="my-activities" className="gap-2">
-              <FileText className="h-4 w-4" />
-              My Activities
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="log-activity">
-            <Card>
-              <CardHeader>
-                <CardTitle>Log New Activity</CardTitle>
-                <CardDescription>Record your work activities and upload supporting documents</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ActivityForm
-                  services={services}
-                  userId={user.id}
-                  onSuccess={() => {
-                    setActiveTab("my-activities")
-                    router.refresh()
-                  }}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="mb-12 relative"
+        >
+          {/* Floating background elements */}
+          <motion.div
+            className="absolute -top-4 -left-4 w-32 h-32 bg-primary-100/50 rounded-full blur-3xl"
+            animate={{ 
+              scale: [1, 1.2, 1],
+              opacity: [0.3, 0.6, 0.3]
+            }}
+            transition={{ 
+              duration: 4,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
+          />
+          <motion.div
+            className="absolute -bottom-6 -right-8 w-24 h-24 bg-gold-200/40 rounded-full blur-2xl"
+            animate={{ 
+              scale: [1.2, 1, 1.2],
+              opacity: [0.4, 0.7, 0.4]
+            }}
+            transition={{ 
+              duration: 3,
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay: 1
+            }}
+          />
+          
+          <div className="relative z-10">
+            <motion.h1 
+              className="text-display-md font-bold bg-gradient-to-r from-neutral-900 via-primary-700 to-neutral-800 bg-clip-text text-transparent mb-3"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+            >
+              Welcome back, {user.full_name}
+            </motion.h1>
+            <motion.p 
+              className="text-xl text-neutral-600 font-medium"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.4 }}
+            >
+              <span className="inline-flex items-center">
+                <motion.span
+                  className="w-2 h-2 bg-secondary-500 rounded-full mr-3"
+                  animate={{ scale: [1, 1.2, 1] }}
+                  transition={{ duration: 2, repeat: Infinity }}
                 />
-              </CardContent>
-            </Card>
-          </TabsContent>
+                {user.departments_sagas?.name}
+              </span>
+              <span className="mx-2 text-neutral-400">•</span>
+              <span className="text-primary-600 font-semibold">{user.county} County</span>
+            </motion.p>
+          </div>
+        </motion.div>
 
-          <TabsContent value="my-activities">
-            <Card>
-              <CardHeader>
-                <CardTitle>My Activity History</CardTitle>
-                <CardDescription>View all your logged activities and their status</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ActivityList activities={activities} />
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+        {/* Enhanced KPI Cards */}
+        <motion.div 
+          className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+        >
+          <EnhancedKPICard
+            title="Total Activities"
+            value={totalActivities}
+            target={50}
+            icon={<DocumentTextIcon />}
+            color="primary"
+            description="Activities logged this month"
+            trend="up"
+            trendValue={8}
+            trendPeriod="vs last month"
+            showProgress={true}
+            animated={true}
+          />
+          <EnhancedKPICard
+            title="Pending Review"
+            value={pendingActivities}
+            target={20}
+            icon={<ClockIcon />}
+            color="warning"
+            description="Awaiting supervisor approval"
+            trend={pendingActivities > 5 ? "up" : "stable"}
+            trendValue={pendingActivities > 5 ? 15 : 0}
+            trendPeriod="vs last week"
+            showProgress={true}
+            animated={true}
+          />
+          <EnhancedKPICard
+            title="Completed"
+            value={completedActivities}
+            previousValue={completedActivities - 3}
+            icon={<CheckCircleIcon />}
+            color="success"
+            description="Successfully completed activities"
+            trend="up"
+            trendValue={12}
+            trendPeriod="vs last month"
+            target={40}
+            showProgress={true}
+            animated={true}
+          />
+        </motion.div>
+
+        {/* Quick Actions */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.4 }}
+          className="mb-8"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-neutral-900">Quick Actions</h2>
+          </div>
+          <div className="flex gap-4">
+            <motion.button
+              onClick={() => setShowActivityForm(true)}
+              className="group flex items-center px-8 py-4 bg-luxury-gradient text-white rounded-2xl font-semibold shadow-luxury hover:shadow-gold transition-all duration-300 border border-primary-400/20 relative overflow-hidden"
+              whileHover={{ 
+                scale: 1.02, 
+                y: -2,
+                boxShadow: '0 20px 60px rgba(210,105,30,0.25)'
+              }}
+              whileTap={{ scale: 0.98 }}
+            >
+              {/* Shimmer effect */}
+              <motion.div
+                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent"
+                animate={{
+                  x: ['-100%', '100%']
+                }}
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  repeatDelay: 3
+                }}
+              />
+              <motion.div
+                animate={{ rotate: [0, 5, 0] }}
+                transition={{ duration: 2, repeat: Infinity }}
+              >
+                <PlusIcon className="w-6 h-6 mr-3" />
+              </motion.div>
+              <span className="relative z-10">Log New Activity</span>
+              
+              {/* Glow effect */}
+              <motion.div
+                className="absolute inset-0 rounded-2xl bg-gradient-to-r from-primary-400/0 via-gold-400/20 to-primary-400/0"
+                animate={{
+                  opacity: [0, 0.3, 0]
+                }}
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  repeatDelay: 1
+                }}
+              />
+            </motion.button>
+            
+            {/* Additional Quick Action Buttons */}
+            <motion.button
+              className="group flex items-center px-6 py-4 bg-white text-neutral-700 rounded-2xl font-medium border border-neutral-200 hover:border-neutral-300 shadow-card hover:shadow-card-hover transition-all duration-300"
+              whileHover={{ scale: 1.02, y: -2 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <ChartBarIcon className="w-5 h-5 mr-2 text-neutral-500 group-hover:text-primary-500 transition-colors" />
+              View Reports
+            </motion.button>
+          </div>
+        </motion.div>
+
+        {/* Recent Activities */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.6 }}
+          className="bg-white rounded-2xl p-6 border border-neutral-200 shadow-card"
+        >
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-semibold text-neutral-900">Recent Activities</h2>
+            <button className="text-primary-500 hover:text-primary-600 font-medium text-sm transition-colors">
+              View All
+            </button>
+          </div>
+          <ActivityList activities={activities.slice(0, 5)} />
+        </motion.div>
       </div>
-    </div>
+
+      {/* Activity Form Modal */}
+      {showActivityForm && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={() => setShowActivityForm(false)}
+        >
+          <motion.div
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.95, opacity: 0 }}
+            className="bg-white rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-semibold text-neutral-900">Log New Activity</h3>
+              <button
+                onClick={() => setShowActivityForm(false)}
+                className="p-2 hover:bg-neutral-100 rounded-lg transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+            <ActivityForm
+              services={services}
+              userId={user.id}
+              onSuccess={() => {
+                setShowActivityForm(false)
+                window.location.reload()
+              }}
+            />
+          </motion.div>
+        </motion.div>
+      )}
+    </ModernLayout>
   )
 }
