@@ -13,7 +13,7 @@ import {
 } from "@heroicons/react/24/outline"
 import { ActivityReviewList } from "./activity-review-list"
 import { DepartmentStats } from "./department-stats"
-import ModernLayout from "./modern-layout"
+import ModernLayout from "./modern-layout-v2"
 import { EnhancedKPICard } from "../ui/enhanced-kpi-card"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
@@ -75,9 +75,9 @@ export function HodDashboard({ user, activities, officers, services }: HodDashbo
 
   const navigation = [
     { name: 'Dashboard', href: '/dashboard/hod', icon: HomeIcon, current: true },
-    { name: 'Activities', href: '/dashboard/hod/activities', icon: DocumentTextIcon, current: false },
-    { name: 'Team', href: '/dashboard/hod/team', icon: UserGroupIcon, current: false },
-    { name: 'Analytics', href: '/dashboard/hod/analytics', icon: ChartBarIcon, current: false },
+    { name: 'Activities', href: '/dashboard/hod', icon: DocumentTextIcon, current: false },
+    { name: 'Team', href: '/dashboard/hod', icon: UserGroupIcon, current: false },
+    { name: 'Analytics', href: '/dashboard/hod', icon: ChartBarIcon, current: false },
   ]
 
   const userInfo = {

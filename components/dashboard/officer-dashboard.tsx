@@ -14,7 +14,7 @@ import {
 } from "@heroicons/react/24/outline"
 import { ActivityForm } from "./activity-form"
 import { ActivityList } from "./activity-list"
-import ModernLayout from "./modern-layout"
+import ModernLayout from "./modern-layout-v2"
 import KPICard from "./KPICard"
 import { EnhancedKPICard } from "../ui/enhanced-kpi-card"
 import { CardSkeleton, LoadingDots } from "../ui/loading"
@@ -45,16 +45,16 @@ export function OfficerDashboard({ user, services, activities }: OfficerDashboar
     (activity) =>
       !activity.activity_status || 
       activity.activity_status.length === 0 || 
-      activity.activity_status.some((status) => status?.pending_count > 0),
+      (Array.isArray(activity.activity_status) && activity.activity_status.some((status) => status?.pending_count > 0)),
   ).length || 0
   const completedActivities = activities?.filter((activity) =>
-    activity.activity_status?.some((status) => status?.completed_count > 0),
+    Array.isArray(activity.activity_status) && activity.activity_status.some((status) => status?.completed_count > 0),
   ).length || 0
 
   const navigation = [
     { name: 'Dashboard', href: '/dashboard/officer', icon: HomeIcon, current: true },
-    { name: 'Activities', href: '/dashboard/officer/activities', icon: DocumentTextIcon, current: false },
-    { name: 'Analytics', href: '/dashboard/officer/analytics', icon: ChartBarIcon, current: false },
+    { name: 'Activities', href: '/dashboard/officer', icon: DocumentTextIcon, current: false },
+    { name: 'Analytics', href: '/dashboard/officer', icon: ChartBarIcon, current: false },
   ]
 
   const userInfo = {

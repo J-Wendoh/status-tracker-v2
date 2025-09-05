@@ -77,13 +77,30 @@ const ModernLayout = ({ children, navigation, userInfo }: ModernLayoutProps) => 
         )}
       </AnimatePresence>
 
-      {/* Sidebar */}
-      <div className="fixed inset-y-0 left-0 z-50 w-72 lg:w-64">
+      {/* Mobile Sidebar */}
+      <AnimatePresence>
+        {sidebarOpen && (
+          <div className="fixed inset-y-0 left-0 z-50 w-72 lg:hidden">
+            <motion.div
+              className="flex h-full flex-col bg-white shadow-xl border-r border-neutral-200"
+              variants={sidebarVariants}
+              initial="closed"
+              animate="open"
+              exit="closed"
+            >
+              {/* Mobile sidebar content will be added here */}
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Desktop Sidebar */}
+      <div className="fixed inset-y-0 left-0 z-50 w-64 hidden lg:block">
         <motion.div
           className="flex h-full flex-col bg-white shadow-xl lg:shadow-lg border-r border-neutral-200"
           variants={sidebarVariants}
-          initial="closed"
-          animate={sidebarOpen ? "open" : "closed"}
+          initial="open"
+          animate="open"
         >
           {/* Header */}
           <div className="flex items-center justify-between px-6 py-6 border-b border-neutral-100">

@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
-import { AgDashboard } from "@/components/dashboard/ag-dashboard"
+import { AgDashboard } from "@/components/dashboard/ag-dashboard-enhanced"
 
 export default async function AgDashboardPage() {
   const timestamp = new Date().toISOString()
