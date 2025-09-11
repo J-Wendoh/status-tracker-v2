@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Image from 'next/image'
-import Link from 'next/link'
 import { useRouter } from "next/navigation"
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline'
 import { createClient } from "@/lib/supabase/client"
@@ -229,17 +228,19 @@ export default function LoginPage() {
                 </motion.button>
               </form>
 
-              {/* Toggle Link */}
+              {/* Support Message */}
               <div className="text-center">
-                <p className="text-sm text-neutral-700 font-medium">
-                  Don't have an account?{' '}
-                  <Link
-                    href="/auth/register"
-                    className="text-primary-600 hover:text-primary-700 font-semibold transition-colors hover:underline decoration-primary-500 decoration-2 underline-offset-2"
-                  >
-                    Register here
-                  </Link>
-                </p>
+                <div className="bg-gradient-to-r from-primary-50 to-gold-50 rounded-lg p-4 border border-primary-100">
+                  <p className="text-sm text-primary-700 font-medium mb-1">
+                    Don't have an account?
+                  </p>
+                  <p className="text-xs text-primary-600">
+                    Please reach out to the development team for account access
+                  </p>
+                  <div className="mt-2 text-xs text-neutral-600">
+                    📧 Contact: <span className="font-medium text-primary-700">dev.team@oag.go.ke</span>
+                  </div>
+                </div>
               </div>
             </div>
           </motion.div>

@@ -52,6 +52,11 @@ const ModernLayout = ({ children, navigation, userInfo, backgroundImage = '/back
     }
   }
 
+  const handleSettings = () => {
+    // Navigate to settings page based on user role
+    router.push('/settings')
+  }
+
   const sidebarVariants = {
     open: {
       x: 0,
@@ -249,7 +254,7 @@ const ModernLayout = ({ children, navigation, userInfo, backgroundImage = '/back
         
         <div className="space-y-2">
           <motion.button
-            onClick={() => {/* Settings functionality can be added later */}}
+            onClick={handleSettings}
             className="group relative flex items-center w-full px-4 py-3 text-sm font-semibold text-neutral-700 rounded-2xl hover:bg-white/30 hover:text-[#BE6400] transition-all duration-300 backdrop-blur-sm border border-white/10 hover:border-[#BE6400]/20 hover:shadow-lg overflow-hidden"
             whileHover={{ scale: 1.02, x: 4 }}
             whileTap={{ scale: 0.98 }}

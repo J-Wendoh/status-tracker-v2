@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { motion } from "framer-motion"
+import { useRouter } from "next/navigation"
 import { 
   PlusIcon, 
   DocumentTextIcon, 
@@ -38,6 +39,7 @@ interface OfficerDashboardProps {
 }
 
 export function OfficerDashboard({ user, services, activities }: OfficerDashboardProps) {
+  const router = useRouter()
   const [showActivityForm, setShowActivityForm] = useState(false)
 
   const totalActivities = activities?.length || 0
@@ -209,11 +211,11 @@ export function OfficerDashboard({ user, services, activities }: OfficerDashboar
           <div className="flex gap-4">
             <motion.button
               onClick={() => setShowActivityForm(true)}
-              className="group flex items-center px-8 py-4 bg-luxury-gradient text-white rounded-2xl font-semibold shadow-luxury hover:shadow-gold transition-all duration-300 border border-primary-400/20 relative overflow-hidden"
+              className="group flex items-center px-8 py-4 bg-gradient-to-r from-neutral-800 via-neutral-900 to-neutral-800 text-white rounded-2xl font-semibold shadow-luxury hover:shadow-gold transition-all duration-300 border border-neutral-700/50 relative overflow-hidden"
               whileHover={{ 
                 scale: 1.02, 
                 y: -2,
-                boxShadow: '0 20px 60px rgba(210,105,30,0.25)'
+                boxShadow: '0 20px 60px rgba(0,0,0,0.25)'
               }}
               whileTap={{ scale: 0.98 }}
             >
@@ -233,9 +235,9 @@ export function OfficerDashboard({ user, services, activities }: OfficerDashboar
                 animate={{ rotate: [0, 5, 0] }}
                 transition={{ duration: 2, repeat: Infinity }}
               >
-                <PlusIcon className="w-6 h-6 mr-3" />
+                <PlusIcon className="w-6 h-6 mr-3 text-white" />
               </motion.div>
-              <span className="relative z-10">Log New Activity</span>
+              <span className="relative z-10 text-white font-bold">Log New Activity</span>
               
               {/* Glow effect */}
               <motion.div
@@ -253,6 +255,7 @@ export function OfficerDashboard({ user, services, activities }: OfficerDashboar
             
             {/* Additional Quick Action Buttons */}
             <motion.button
+              onClick={() => router.push('/dashboard/officer/activities')}
               className="group flex items-center px-6 py-4 bg-white text-neutral-700 rounded-2xl font-medium border border-neutral-200 hover:border-neutral-300 shadow-card hover:shadow-card-hover transition-all duration-300"
               whileHover={{ scale: 1.02, y: -2 }}
               whileTap={{ scale: 0.98 }}
@@ -271,23 +274,28 @@ export function OfficerDashboard({ user, services, activities }: OfficerDashboar
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 bg-white/20 backdrop-blur-lg flex items-center justify-center p-4"
+          className="fixed inset-0 z-[9999] bg-black/30 backdrop-blur-lg flex items-center justify-center p-4"
           onClick={() => setShowActivityForm(false)}
         >
           <motion.div
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
-            className="bg-white rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+            className="bg-white rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl border border-primary-100 relative z-[10000]"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-semibold text-neutral-900">Log New Activity</h3>
+            <div className="flex items-center justify-between mb-6 border-b border-primary-100 pb-4">
+              <div>
+                <h3 className="text-xl font-bold text-neutral-900">Log New Activity</h3>
+                <p className="text-sm text-primary-600 mt-1">Submit your department activity for review</p>
+              </div>
               <button
                 onClick={() => setShowActivityForm(false)}
-                className="p-2 hover:bg-neutral-100 rounded-lg transition-colors"
+                className="p-2 hover:bg-accent-50 hover:text-accent-600 rounded-xl transition-all duration-200 text-neutral-500 hover:scale-110"
               >
-                ✕
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
               </button>
             </div>
             <ActivityForm

@@ -1,5 +1,4 @@
 {
-  "name": "oag-activity-tracker",
   "framework": "nextjs",
   "buildCommand": "npm run build",
   "devCommand": "npm run dev",

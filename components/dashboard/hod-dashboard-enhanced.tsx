@@ -75,9 +75,9 @@ export function HodDashboard({ user, activities, officers, services }: HodDashbo
 
   const navigation = [
     { name: 'Dashboard', href: '/dashboard/hod', icon: HomeIcon, current: true },
-    { name: 'Activities', href: '/dashboard/hod', icon: DocumentTextIcon, current: false },
-    { name: 'Team', href: '/dashboard/hod', icon: UserGroupIcon, current: false },
-    { name: 'Analytics', href: '/dashboard/hod', icon: ChartBarIcon, current: false },
+    { name: 'Activities', href: '/dashboard/hod/activities', icon: DocumentTextIcon, current: false },
+    { name: 'Team', href: '/dashboard/hod/team', icon: UserGroupIcon, current: false },
+    { name: 'Analytics', href: '/dashboard/hod/analytics', icon: ChartBarIcon, current: false },
   ]
 
   const userInfo = {

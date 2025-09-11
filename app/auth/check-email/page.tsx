@@ -12,12 +12,12 @@ export default function CheckEmailPage() {
             <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
               <Mail className="h-6 w-6 text-primary" />
             </div>
-            <CardTitle className="text-2xl">Check your email</CardTitle>
-            <CardDescription>We've sent you a confirmation link to complete your registration</CardDescription>
+            <CardTitle className="text-2xl">Account Verification</CardTitle>
+            <CardDescription>Your account access is being processed by the development team</CardDescription>
           </CardHeader>
           <CardContent className="text-center">
             <p className="text-sm text-muted-foreground mb-4">
-              Please check your email and click the confirmation link to activate your account.
+              Please contact the development team at dev.team@oag.go.ke for account activation assistance.
             </p>
             <Button asChild variant="outline" className="w-full bg-transparent">
               <Link href="/auth/login">Back to Sign In</Link>
