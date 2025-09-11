@@ -7,7 +7,6 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Textarea } from "@/components/ui/textarea"
 import {
   Dialog,
   DialogContent,
@@ -61,8 +60,6 @@ export function ActivityReviewList({ activities, showActions, onStatusUpdate }: 
   const [statusForm, setStatusForm] = useState({
     pendingCount: "",
     completedCount: "",
-    status: "",
-    notes: "",
   })
   const [isLoading, setIsLoading] = useState(false)
   const itemsPerPage = 10
@@ -87,31 +84,6 @@ export function ActivityReviewList({ activities, showActions, onStatusUpdate }: 
     }
 
     const latestStatus = activity.activity_status[0]
-    
-    // Check for explicit status first
-    if (latestStatus.status === 'approved') {
-      return (
-        <Badge variant="default" className="bg-green-100 text-green-800 border-green-200">
-          ✓ Approved ({activity.count})
-        </Badge>
-      )
-    } else if (latestStatus.status === 'rejected') {
-      return (
-        <Badge variant="destructive" className="bg-red-100 text-red-800 border-red-200">
-          ✗ Rejected
-        </Badge>
-      )
-    } else if (latestStatus.status === 'in_progress') {
-      const completed = latestStatus.completed_count || 0
-      const pending = latestStatus.pending_count || 0
-      return (
-        <Badge variant="outline" className="border-blue-200 text-blue-800 bg-blue-50">
-          ⏳ In Progress ({completed}/{activity.count})
-        </Badge>
-      )
-    }
-
-    // Fallback to legacy count-based logic
     if (latestStatus.completed_count && latestStatus.completed_count > 0) {
       return (
         <Badge variant="default" className="bg-green-100 text-green-800">
@@ -129,44 +101,30 @@ export function ActivityReviewList({ activities, showActions, onStatusUpdate }: 
     return <Badge variant="secondary">Pending Review</Badge>
   }
 
-  const handleStatusUpdate = async (newStatus: 'approved' | 'rejected' | 'in_progress') => {
+  const handleStatusUpdate = async () => {
     if (!selectedActivity) return
 
     setIsLoading(true)
     const supabase = createClient()
 
     try {
-      let pendingCount = 0
-      let completedCount = 0
-
-      // Set counts based on status
-      if (newStatus === 'approved') {
-        completedCount = selectedActivity.count
-        pendingCount = 0
-      } else if (newStatus === 'rejected') {
-        completedCount = 0
-        pendingCount = 0
-      } else if (newStatus === 'in_progress') {
-        pendingCount = Number.parseInt(statusForm.pendingCount) || selectedActivity.count
-        completedCount = Number.parseInt(statusForm.completedCount) || 0
-        
-        if (pendingCount + completedCount > selectedActivity.count) {
-          alert("Total pending and completed count cannot exceed the original count")
-          setIsLoading(false)
-          return
-        }
-      }
+      const pendingCount = Number.parseInt(statusForm.pendingCount) || 0
+      const completedCount = Number.parseInt(statusForm.completedCount) || 0
 
       console.log("[STATUS-UPDATE] Attempting to update status:", {
         activityId: selectedActivity.id,
-        status: newStatus,
         pendingCount,
         completedCount,
-        totalCount: selectedActivity.count,
-        notes: statusForm.notes
+        totalCount: selectedActivity.count
       })
 
-      // Query database for existing status
+      if (pendingCount + completedCount > selectedActivity.count) {
+        alert("Total pending and completed count cannot exceed the original count")
+        setIsLoading(false)
+        return
+      }
+
+      // Query database for existing status (don't rely on stale page data)
       const { data: existingStatuses, error: fetchError } = await supabase
         .from("activity_status")
         .select("*")
@@ -174,39 +132,43 @@ export function ActivityReviewList({ activities, showActions, onStatusUpdate }: 
         .order("created_at", { ascending: false })
         .limit(1)
 
+      console.log("[STATUS-UPDATE] Existing status check:", { existingStatuses, fetchError })
+      
       if (fetchError) {
         throw new Error(`Failed to check existing status: ${fetchError.message}`)
       }
 
       const existingStatus = existingStatuses?.[0]
-      const statusData = {
-        pending_count: pendingCount,
-        completed_count: completedCount,
-        status: newStatus,
-        notes: statusForm.notes || null,
-      }
 
       if (existingStatus) {
         // Update existing status
-        const { error } = await supabase
+        console.log("[STATUS-UPDATE] Updating existing status ID:", existingStatus.id)
+        const { data, error } = await supabase
           .from("activity_status")
-          .update(statusData)
+          .update({
+            pending_count: pendingCount,
+            completed_count: completedCount,
+          })
           .eq("id", existingStatus.id)
 
+        console.log("[STATUS-UPDATE] Update result:", { data, error })
         if (error) throw error
       } else {
         // Create new status
-        const { error } = await supabase.from("activity_status").insert({
+        console.log("[STATUS-UPDATE] Creating new status for activity:", selectedActivity.id)
+        const { data, error } = await supabase.from("activity_status").insert({
           activity_id: selectedActivity.id,
-          ...statusData
+          pending_count: pendingCount,
+          completed_count: completedCount,
         })
 
+        console.log("[STATUS-UPDATE] Insert result:", { data, error })
         if (error) throw error
       }
 
       console.log("[STATUS-UPDATE] Status update successful, refreshing...")
       setSelectedActivity(null)
-      setStatusForm({ pendingCount: "", completedCount: "", status: "", notes: "" })
+      setStatusForm({ pendingCount: "", completedCount: "" })
       onStatusUpdate()
     } catch (error) {
       console.error("[STATUS-UPDATE] Error updating status:", error)
@@ -223,11 +185,9 @@ export function ActivityReviewList({ activities, showActions, onStatusUpdate }: 
       setStatusForm({
         pendingCount: (existingStatus.pending_count || 0).toString(),
         completedCount: (existingStatus.completed_count || 0).toString(),
-        status: existingStatus.status || "",
-        notes: existingStatus.notes || "",
       })
     } else {
-      setStatusForm({ pendingCount: "", completedCount: "", status: "", notes: "" })
+      setStatusForm({ pendingCount: "", completedCount: "" })
     }
   }
 
@@ -343,142 +303,44 @@ export function ActivityReviewList({ activities, showActions, onStatusUpdate }: 
                         <div className="grid gap-4 py-4">
                           <div className="grid gap-2">
                             <Label>Activity Details</Label>
-                            <div className="text-sm text-muted-foreground bg-muted p-3 rounded-md">
-                              <p><strong>Officer:</strong> {activity.officer.full_name}</p>
-                              <p><strong>Service:</strong> {activity.service.name}</p>
-                              <p><strong>Total Count:</strong> {activity.count}</p>
-                              {activity.description && <p><strong>Description:</strong> {activity.description}</p>}
-                              <p><strong>Submitted:</strong> {format(new Date(activity.created_at), "MMM dd, yyyy 'at' h:mm a")}</p>
+                            <div className="text-sm text-muted-foreground">
+                              <p>Total Count: {activity.count}</p>
+                              {activity.description && <p>Description: {activity.description}</p>}
                             </div>
                           </div>
-
-                          <div className="grid gap-3">
-                            <Label>Choose Action</Label>
-                            <div className="grid gap-3">
-                              {/* Approved Button */}
-                              <Button
-                                onClick={() => handleStatusUpdate('approved')}
-                                disabled={isLoading}
-                                className="w-full bg-green-600 hover:bg-green-700 text-white"
-                                size="lg"
-                              >
-                                {isLoading ? "Processing..." : "✓ Approve Activity"}
-                                <span className="ml-2 text-xs opacity-75">({activity.count} items completed)</span>
-                              </Button>
-
-                              {/* Rejected Button */}
-                              <Button
-                                onClick={() => handleStatusUpdate('rejected')}
-                                disabled={isLoading}
-                                variant="destructive"
-                                className="w-full"
-                                size="lg"
-                              >
-                                {isLoading ? "Processing..." : "✗ Reject Activity"}
-                                <span className="ml-2 text-xs opacity-75">(Mark as not completed)</span>
-                              </Button>
-
-                              {/* In Progress Button - Expandable */}
-                              <div className="space-y-3">
-                                <Button
-                                  onClick={() => setStatusForm(prev => ({ ...prev, status: prev.status === 'in_progress' ? '' : 'in_progress' }))}
-                                  disabled={isLoading}
-                                  variant={statusForm.status === 'in_progress' ? 'default' : 'outline'}
-                                  className="w-full"
-                                  size="lg"
-                                >
-                                  ⏳ Mark as In Progress
-                                  <span className="ml-2 text-xs opacity-75">(Partial completion)</span>
-                                </Button>
-
-                                {/* In Progress Details */}
-                                {statusForm.status === 'in_progress' && (
-                                  <div className="space-y-3 p-4 border rounded-md bg-blue-50/50">
-                                    <div className="grid grid-cols-2 gap-4">
-                                      <div className="grid gap-2">
-                                        <Label htmlFor="completed">Completed Count</Label>
-                                        <Input
-                                          id="completed"
-                                          type="number"
-                                          min="0"
-                                          max={activity.count}
-                                          value={statusForm.completedCount}
-                                          onChange={(e) => setStatusForm((prev) => ({ ...prev, completedCount: e.target.value }))}
-                                          placeholder="0"
-                                        />
-                                        <p className="text-xs text-muted-foreground">Items already completed</p>
-                                      </div>
-                                      <div className="grid gap-2">
-                                        <Label htmlFor="pending">Remaining Count</Label>
-                                        <Input
-                                          id="pending"
-                                          type="number"
-                                          min="0"
-                                          max={activity.count}
-                                          value={statusForm.pendingCount}
-                                          onChange={(e) => setStatusForm((prev) => ({ ...prev, pendingCount: e.target.value }))}
-                                          placeholder={activity.count.toString()}
-                                        />
-                                        <p className="text-xs text-muted-foreground">Items still in progress</p>
-                                      </div>
-                                    </div>
-                                    
-                                    <div className="grid gap-2">
-                                      <Label htmlFor="notes">Progress Notes (Optional)</Label>
-                                      <Textarea
-                                        id="notes"
-                                        value={statusForm.notes}
-                                        onChange={(e) => setStatusForm((prev) => ({ ...prev, notes: e.target.value }))}
-                                        placeholder="Add notes about the current progress..."
-                                        rows={2}
-                                      />
-                                    </div>
-
-                                    <Button
-                                      onClick={() => handleStatusUpdate('in_progress')}
-                                      disabled={isLoading}
-                                      className="w-full bg-blue-600 hover:bg-blue-700"
-                                    >
-                                      {isLoading ? "Updating..." : "Update Progress Status"}
-                                    </Button>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Current Status Display */}
-                          {activity.activity_status?.[0] && (
+                          <div className="grid grid-cols-2 gap-4">
                             <div className="grid gap-2">
-                              <Label>Current Status</Label>
-                              <div className="p-3 border rounded-md bg-muted/50">
-                                <div className="flex items-center gap-2 mb-2">
-                                  <Badge variant={
-                                    activity.activity_status[0].status === 'approved' ? 'default' :
-                                    activity.activity_status[0].status === 'rejected' ? 'destructive' :
-                                    activity.activity_status[0].status === 'in_progress' ? 'secondary' : 'outline'
-                                  }>
-                                    {activity.activity_status[0].status || 'pending'}
-                                  </Badge>
-                                </div>
-                                {activity.activity_status[0].status === 'in_progress' && (
-                                  <div className="text-sm text-muted-foreground">
-                                    <p>Completed: {activity.activity_status[0].completed_count || 0}</p>
-                                    <p>Remaining: {activity.activity_status[0].pending_count || 0}</p>
-                                  </div>
-                                )}
-                                {activity.activity_status[0].notes && (
-                                  <p className="text-sm text-muted-foreground mt-2">
-                                    <strong>Notes:</strong> {activity.activity_status[0].notes}
-                                  </p>
-                                )}
-                              </div>
+                              <Label htmlFor="pending">Pending Count</Label>
+                              <Input
+                                id="pending"
+                                type="number"
+                                min="0"
+                                max={activity.count}
+                                value={statusForm.pendingCount}
+                                onChange={(e) => setStatusForm((prev) => ({ ...prev, pendingCount: e.target.value }))}
+                                placeholder="0"
+                              />
                             </div>
-                          )}
+                            <div className="grid gap-2">
+                              <Label htmlFor="completed">Completed Count</Label>
+                              <Input
+                                id="completed"
+                                type="number"
+                                min="0"
+                                max={activity.count}
+                                value={statusForm.completedCount}
+                                onChange={(e) => setStatusForm((prev) => ({ ...prev, completedCount: e.target.value }))}
+                                placeholder="0"
+                              />
+                            </div>
+                          </div>
                         </div>
                         <DialogFooter>
-                          <Button variant="outline" onClick={() => setSelectedActivity(null)} className="w-full">
+                          <Button variant="outline" onClick={() => setSelectedActivity(null)}>
                             Cancel
+                          </Button>
+                          <Button onClick={handleStatusUpdate} disabled={isLoading}>
+                            {isLoading ? "Updating..." : "Update Status"}
                           </Button>
                         </DialogFooter>
                       </DialogContent>

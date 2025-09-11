@@ -2,6 +2,24 @@
 
 import { useState, useMemo } from "react"
 import { motion } from "framer-motion"
+
+// Safe motion wrapper with error boundary
+const SafeMotion = ({ children, initial, animate, transition, className, ...props }: any) => {
+  try {
+    // Sanitize animation props
+    const safeProps = {
+      ...props,
+      className,
+      ...(initial && { initial }),
+      ...(animate && { animate }),
+      ...(transition && { transition })
+    }
+    return <motion.div {...safeProps}>{children}</motion.div>
+  } catch (error) {
+    console.warn('Motion component error, falling back to static div:', error)
+    return <div className={className} {...props}>{children}</div>
+  }
+}
 import { 
   HomeIcon,
   UserGroupIcon,
@@ -64,6 +82,12 @@ interface HodAnalyticsViewProps {
 
 export function HodAnalyticsView({ user, activities, services, teamMembers }: HodAnalyticsViewProps) {
   const [timeRange, setTimeRange] = useState<'week' | 'month' | 'quarter' | 'year'>('month')
+  
+  // Early validation
+  if (!user) {
+    console.error('HodAnalyticsView: user prop is missing')
+    return <div className="p-6 text-center text-red-600">Error: User data is required</div>
+  }
 
   // Calculate analytics data with error handling
   const analyticsData = useMemo(() => {
@@ -221,7 +245,9 @@ export function HodAnalyticsView({ user, activities, services, teamMembers }: Ho
   const userInfo = {
     name: user?.full_name || 'Unknown User',
     role: 'Head of Department',
-    department: user?.departments_sagas?.name || 'Unknown Department'
+    department: (user?.departments_sagas && typeof user.departments_sagas === 'object') 
+      ? user.departments_sagas.name || 'Unknown Department'
+      : 'Unknown Department'
   }
 
   // Additional safety check before rendering
@@ -252,7 +278,7 @@ export function HodAnalyticsView({ user, activities, services, teamMembers }: Ho
     >
       <div className="space-y-6">
         {/* Header Section */}
-        <motion.div
+        <SafeMotion
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
@@ -286,10 +312,10 @@ export function HodAnalyticsView({ user, activities, services, teamMembers }: Ho
               ))}
             </div>
           </div>
-        </motion.div>
+        </SafeMotion>
 
         {/* KPI Cards */}
-        <motion.div 
+        <SafeMotion 
           className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -347,10 +373,10 @@ export function HodAnalyticsView({ user, activities, services, teamMembers }: Ho
               </div>
             </div>
           </div>
-        </motion.div>
+        </SafeMotion>
 
         {/* Service Performance Chart */}
-        <motion.div
+        <SafeMotion
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
@@ -373,8 +399,17 @@ export function HodAnalyticsView({ user, activities, services, teamMembers }: Ho
                       className="bg-primary-500 h-2 rounded-full transition-all duration-500"
                       style={{ 
                         width: `${Math.min(
-                          analyticsData.serviceStats.length > 0 
-                            ? (service.totalActivities / Math.max(...analyticsData.serviceStats.map(s => s?.totalActivities || 0), 1)) * 100
+                          analyticsData?.serviceStats && analyticsData.serviceStats.length > 0 
+                            ? (() => {
+                                try {
+                                  const maxActivities = Math.max(...analyticsData.serviceStats.map(s => s?.totalActivities || 0))
+                                  const percentage = maxActivities > 0 ? ((service?.totalActivities || 0) / maxActivities) * 100 : 0
+                                  return isNaN(percentage) ? 0 : percentage
+                                } catch (error) {
+                                  console.warn('Error calculating service progress:', error)
+                                  return 0
+                                }
+                              })()
                             : 0, 
                           100
                         )}%` 
@@ -396,10 +431,10 @@ export function HodAnalyticsView({ user, activities, services, teamMembers }: Ho
               </div>
             )}
           </div>
-        </motion.div>
+        </SafeMotion>
 
         {/* Team Performance */}
-        <motion.div
+        <SafeMotion
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.3 }}
@@ -460,7 +495,7 @@ export function HodAnalyticsView({ user, activities, services, teamMembers }: Ho
               </div>
             )}
           </div>
-        </motion.div>
+        </SafeMotion>
 
       </div>
     </ModernLayout>

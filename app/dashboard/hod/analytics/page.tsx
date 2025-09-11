@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { HodAnalyticsView } from "@/components/dashboard/hod-analytics-view"
+import { HodAnalyticsErrorBoundary } from "@/components/dashboard/hod-analytics-error-boundary"
 
 export default async function HodAnalyticsPage() {
   const timestamp = new Date().toISOString()
@@ -124,11 +125,13 @@ export default async function HodAnalyticsPage() {
   }
 
   return (
-    <HodAnalyticsView
-      user={userProfile}
-      activities={activities || []}
-      services={services || []}
-      teamMembers={teamMembers || []}
-    />
+    <HodAnalyticsErrorBoundary>
+      <HodAnalyticsView
+        user={userProfile}
+        activities={activities || []}
+        services={services || []}
+        teamMembers={teamMembers || []}
+      />
+    </HodAnalyticsErrorBoundary>
   )
 }
