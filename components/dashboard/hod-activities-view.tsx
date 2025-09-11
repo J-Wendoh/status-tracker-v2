@@ -65,19 +65,19 @@ export function HodActivitiesView({ user, activities, officers, services }: HodA
   const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all')
 
   // Filter activities based on status
-  const filteredActivities = activities.filter(activity => {
+  const filteredActivities = (activities || []).filter(activity => {
     if (filterStatus === 'all') return true
     
-    const latestStatus = activity.activity_status?.[0]
+    const latestStatus = activity?.activity_status?.[0]
     if (!latestStatus) return filterStatus === 'pending'
     
     switch (filterStatus) {
       case 'pending':
-        return latestStatus.status === 'pending' || !latestStatus.status
+        return latestStatus?.status === 'pending' || !latestStatus?.status
       case 'approved':
-        return latestStatus.status === 'approved'
+        return latestStatus?.status === 'approved'
       case 'rejected':
-        return latestStatus.status === 'rejected'
+        return latestStatus?.status === 'rejected'
       default:
         return true
     }
@@ -91,23 +91,23 @@ export function HodActivitiesView({ user, activities, officers, services }: HodA
   ]
 
   const userInfo = {
-    name: user.full_name,
+    name: user?.full_name || 'Unknown User',
     role: 'Head of Department',
-    department: user.departments_sagas?.name
+    department: user?.departments_sagas?.name || 'Unknown Department'
   }
 
-  const pendingCount = activities.filter(activity => 
-    !activity.activity_status?.length || 
+  const pendingCount = (activities || []).filter(activity => 
+    !activity?.activity_status?.length || 
     activity.activity_status?.[0]?.status === 'pending' || 
     !activity.activity_status?.[0]?.status
   ).length
 
-  const approvedCount = activities.filter(activity => 
-    activity.activity_status?.[0]?.status === 'approved'
+  const approvedCount = (activities || []).filter(activity => 
+    activity?.activity_status?.[0]?.status === 'approved'
   ).length
 
-  const rejectedCount = activities.filter(activity => 
-    activity.activity_status?.[0]?.status === 'rejected'
+  const rejectedCount = (activities || []).filter(activity => 
+    activity?.activity_status?.[0]?.status === 'rejected'
   ).length
 
   return (
@@ -141,7 +141,7 @@ export function HodActivitiesView({ user, activities, officers, services }: HodA
               <DocumentTextIcon className="w-8 h-8 text-primary-500" />
               <div className="ml-4">
                 <p className="text-sm font-medium text-neutral-600">Total Activities</p>
-                <p className="text-2xl font-bold text-neutral-900">{activities.length}</p>
+                <p className="text-2xl font-bold text-neutral-900">{(activities || []).length}</p>
               </div>
             </div>
           </div>
@@ -188,7 +188,7 @@ export function HodActivitiesView({ user, activities, officers, services }: HodA
         >
           <div className="flex space-x-1 bg-neutral-100 p-1 rounded-xl">
             {[
-              { key: 'all', label: 'All Activities', count: activities.length },
+              { key: 'all', label: 'All Activities', count: (activities || []).length },
               { key: 'pending', label: 'Pending', count: pendingCount },
               { key: 'approved', label: 'Approved', count: approvedCount },
               { key: 'rejected', label: 'Rejected', count: rejectedCount },
@@ -272,40 +272,40 @@ export function HodActivitiesView({ user, activities, officers, services }: HodA
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-neutral-700 mb-1">Officer</label>
-                <p className="text-neutral-900">{selectedActivity.users.full_name}</p>
+                <p className="text-neutral-900">{selectedActivity?.users?.full_name || 'Unknown Officer'}</p>
               </div>
               
               <div>
                 <label className="block text-sm font-medium text-neutral-700 mb-1">Service</label>
-                <p className="text-neutral-900">{selectedActivity.service.name}</p>
+                <p className="text-neutral-900">{selectedActivity?.service?.name || 'Unknown Service'}</p>
               </div>
               
               <div>
                 <label className="block text-sm font-medium text-neutral-700 mb-1">Description</label>
-                <p className="text-neutral-900">{selectedActivity.description}</p>
+                <p className="text-neutral-900">{selectedActivity?.description || 'No description provided'}</p>
               </div>
               
               <div>
                 <label className="block text-sm font-medium text-neutral-700 mb-1">Count</label>
-                <p className="text-neutral-900">{selectedActivity.count}</p>
+                <p className="text-neutral-900">{selectedActivity?.count || 0}</p>
               </div>
               
               <div>
                 <label className="block text-sm font-medium text-neutral-700 mb-1">Submitted Date</label>
-                <p className="text-neutral-900">{new Date(selectedActivity.created_at).toLocaleDateString()}</p>
+                <p className="text-neutral-900">{selectedActivity?.created_at ? new Date(selectedActivity.created_at).toLocaleDateString() : 'Unknown date'}</p>
               </div>
               
-              {selectedActivity.activity_status?.[0] && (
+              {selectedActivity?.activity_status?.[0] && (
                 <div>
                   <label className="block text-sm font-medium text-neutral-700 mb-1">Status</label>
                   <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    selectedActivity.activity_status[0].status === 'approved'
+                    selectedActivity.activity_status[0]?.status === 'approved'
                       ? 'bg-success-100 text-success-800'
-                      : selectedActivity.activity_status[0].status === 'rejected'
+                      : selectedActivity.activity_status[0]?.status === 'rejected'
                       ? 'bg-error-100 text-error-800'
                       : 'bg-warning-100 text-warning-800'
                   }`}>
-                    {selectedActivity.activity_status[0].status || 'pending'}
+                    {selectedActivity.activity_status[0]?.status || 'pending'}
                   </span>
                 </div>
               )}

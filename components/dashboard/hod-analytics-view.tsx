@@ -87,19 +87,19 @@ export function HodAnalyticsView({ user, activities, services, teamMembers }: Ho
         startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
     }
 
-    const filteredActivities = activities.filter(activity => 
-      new Date(activity.created_at) >= startDate
+    const filteredActivities = (activities || []).filter(activity => 
+      activity?.created_at && new Date(activity.created_at) >= startDate
     )
 
     // Service performance
-    const serviceStats = services.map(service => {
-      const serviceActivities = filteredActivities.filter(a => a.service_id === service.id)
-      const totalCount = serviceActivities.reduce((sum, a) => sum + a.count, 0)
+    const serviceStats = (services || []).map(service => {
+      const serviceActivities = filteredActivities.filter(a => a?.service_id === service?.id)
+      const totalCount = serviceActivities.reduce((sum, a) => sum + (a?.count || 0), 0)
       const completedActivities = serviceActivities.filter(a => 
-        a.activity_status.some(s => s.status === 'approved' || s.completed_count > 0)
+        a?.activity_status && Array.isArray(a.activity_status) && a.activity_status.some(s => s?.status === 'approved' || (s?.completed_count || 0) > 0)
       ).length
       const pendingActivities = serviceActivities.filter(a => 
-        !a.activity_status.length || a.activity_status.some(s => s.status === 'pending' || !s.status)
+        !a?.activity_status || !a.activity_status.length || a.activity_status.some(s => s?.status === 'pending' || !s?.status)
       ).length
 
       return {
@@ -113,11 +113,11 @@ export function HodAnalyticsView({ user, activities, services, teamMembers }: Ho
     })
 
     // Team performance
-    const teamStats = teamMembers.map(member => {
-      const memberActivities = filteredActivities.filter(a => a.user_id === member.id)
-      const totalCount = memberActivities.reduce((sum, a) => sum + a.count, 0)
+    const teamStats = (teamMembers || []).map(member => {
+      const memberActivities = filteredActivities.filter(a => a?.user_id === member?.id)
+      const totalCount = memberActivities.reduce((sum, a) => sum + (a?.count || 0), 0)
       const completedActivities = memberActivities.filter(a => 
-        a.activity_status.some(s => s.status === 'approved' || s.completed_count > 0)
+        a?.activity_status && Array.isArray(a.activity_status) && a.activity_status.some(s => s?.status === 'approved' || (s?.completed_count || 0) > 0)
       ).length
 
       return {
@@ -133,25 +133,25 @@ export function HodAnalyticsView({ user, activities, services, teamMembers }: Ho
     const dailyTrend = Array.from({ length: 30 }, (_, i) => {
       const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000)
       const dateStr = date.toISOString().split('T')[0]
-      const dayActivities = activities.filter(a => 
-        a.created_at.startsWith(dateStr)
+      const dayActivities = (activities || []).filter(a => 
+        a?.created_at && a.created_at.startsWith(dateStr)
       )
       
       return {
         date: dateStr,
         count: dayActivities.length,
-        totalValue: dayActivities.reduce((sum, a) => sum + a.count, 0)
+        totalValue: dayActivities.reduce((sum, a) => sum + (a?.count || 0), 0)
       }
     }).reverse()
 
     return {
       totalActivities: filteredActivities.length,
-      totalValue: filteredActivities.reduce((sum, a) => sum + a.count, 0),
+      totalValue: filteredActivities.reduce((sum, a) => sum + (a?.count || 0), 0),
       completedActivities: filteredActivities.filter(a => 
-        a.activity_status.some(s => s.status === 'approved' || s.completed_count > 0)
+        a?.activity_status && Array.isArray(a.activity_status) && a.activity_status.some(s => s?.status === 'approved' || (s?.completed_count || 0) > 0)
       ).length,
       pendingActivities: filteredActivities.filter(a => 
-        !a.activity_status.length || a.activity_status.some(s => s.status === 'pending' || !s.status)
+        !a?.activity_status || !a.activity_status.length || a.activity_status.some(s => s?.status === 'pending' || !s?.status)
       ).length,
       serviceStats,
       teamStats,
@@ -167,9 +167,9 @@ export function HodAnalyticsView({ user, activities, services, teamMembers }: Ho
   ]
 
   const userInfo = {
-    name: user.full_name,
+    name: user?.full_name || 'Unknown User',
     role: 'Head of Department',
-    department: user.departments_sagas?.name
+    department: user?.departments_sagas?.name || 'Unknown Department'
   }
 
   return (
@@ -300,7 +300,7 @@ export function HodAnalyticsView({ user, activities, services, teamMembers }: Ho
                     <div
                       className="bg-primary-500 h-2 rounded-full transition-all duration-500"
                       style={{ 
-                        width: `${Math.min((service.totalActivities / Math.max(...analyticsData.serviceStats.map(s => s.totalActivities))) * 100, 100)}%` 
+                        width: `${Math.min((service.totalActivities / Math.max(...analyticsData.serviceStats.map(s => s?.totalActivities || 0), 1)) * 100, 100)}%` 
                       }}
                     />
                   </div>
@@ -330,19 +330,19 @@ export function HodAnalyticsView({ user, activities, services, teamMembers }: Ho
                 <div className="flex items-center space-x-3 mb-3">
                   <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
                     <span className="text-primary-600 font-semibold text-sm">
-                      {member.full_name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                      {(member?.full_name || '').split(' ').map(n => n?.[0] || '').join('').slice(0, 2) || 'NA'}
                     </span>
                   </div>
                   <div>
-                    <h3 className="font-medium text-neutral-900">{member.full_name}</h3>
+                    <h3 className="font-medium text-neutral-900">{member?.full_name || 'Unknown'}</h3>
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      member.category === 'CEO'
+                      member?.category === 'CEO'
                         ? 'bg-gold-100 text-gold-800'
-                        : member.category === 'HOD'
+                        : member?.category === 'HOD'
                         ? 'bg-purple-100 text-purple-800'
                         : 'bg-blue-100 text-blue-800'
                     }`}>
-                      {member.category}
+                      {member?.category || 'Unknown'}
                     </span>
                   </div>
                 </div>
