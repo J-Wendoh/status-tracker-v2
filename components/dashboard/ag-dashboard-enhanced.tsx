@@ -166,33 +166,32 @@ export function AgDashboard({ user, departmentsSagas, activities, officers, serv
         />
       </div>
 
-      {/* Orange-Brown Themed Sidebar */}
+      {/* Professional White Sidebar */}
       <motion.div 
-        className="w-80 border-r bg-gradient-to-b from-amber-50/95 to-orange-50/95 backdrop-blur-xl shadow-2xl border-orange-200/60 relative z-10"
+        className="w-80 border-r bg-white/95 backdrop-blur-xl shadow-lg border-gray-200 relative z-10"
         initial={{ x: -320, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
         transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
       >
-        {/* Warm orange accent */}
-        <div className="absolute inset-0 bg-gradient-to-br from-orange-100/40 via-amber-50/70 to-orange-200/30" />
+        {/* Subtle accent */}
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500 via-amber-600 to-orange-600" />
-        <div className="p-6 border-b border-orange-200">
+        <div className="p-6 border-b border-gray-200">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-amber-600 rounded-xl flex items-center justify-center shadow-lg">
               <Crown className="h-6 w-6 text-white" />
             </div>
             <div>
-              <h1 className="text-lg font-bold text-orange-900">
+              <h1 className="text-lg font-bold text-gray-800">
                 Attorney General
               </h1>
-              <p className="text-xs text-orange-700 font-medium">System Analytics & Management</p>
+              <p className="text-xs text-gray-600 font-medium">System Analytics & Management</p>
             </div>
           </div>
           
           {/* Enhanced Welcome message */}
-          <div className="bg-gradient-to-r from-orange-100 to-amber-100 rounded-lg p-3 border border-orange-200">
-            <p className="text-sm text-orange-800 font-medium">Welcome, {user.full_name}</p>
-            <p className="text-xs text-orange-700 mt-1">Managing {totalOfficers} officers across {totalDepartmentsSagas} departments</p>
+          <div className="bg-gradient-to-r from-orange-50 to-amber-50 rounded-lg p-3 border border-orange-200">
+            <p className="text-sm text-gray-800 font-medium">Welcome, {user.full_name}</p>
+            <p className="text-xs text-gray-600 mt-1">Managing {totalOfficers} officers across {totalDepartmentsSagas} departments</p>
           </div>
         </div>
 
@@ -205,7 +204,7 @@ export function AgDashboard({ user, departmentsSagas, activities, officers, serv
                 className={`w-full justify-start gap-2 transition-all duration-300 hover:scale-[1.02] ${
                   selectedView === "analytics"
                     ? 'bg-gradient-to-r from-orange-600 to-amber-600 text-white shadow-lg border border-orange-400'
-                    : 'text-orange-800 hover:bg-gradient-to-r hover:from-orange-100 hover:to-amber-100 hover:text-orange-900 border border-transparent'
+                    : 'text-gray-700 hover:bg-gray-50 hover:text-orange-700 border border-transparent'
                 }`}
                 onClick={() => handleViewChange("analytics")}
               >
@@ -222,7 +221,7 @@ export function AgDashboard({ user, departmentsSagas, activities, officers, serv
             <div>
               <button
                 onClick={() => setDepartmentsExpanded(!departmentsExpanded)}
-                className="w-full flex items-center justify-between text-sm font-medium text-orange-800 mb-2 p-2 hover:bg-orange-100 rounded-lg transition-colors"
+                className="w-full flex items-center justify-between text-sm font-medium text-gray-700 mb-2 p-2 hover:bg-gray-50 rounded-lg transition-colors"
               >
                 <div className="flex items-center gap-2">
                   <Building className="h-4 w-4" />
@@ -258,14 +257,14 @@ export function AgDashboard({ user, departmentsSagas, activities, officers, serv
                         className={`w-full justify-start text-left h-auto p-4 transition-all duration-300 hover:scale-[1.02] hover:shadow-md ${
                           selectedView === dept.id.toString()
                             ? 'bg-gradient-to-r from-orange-600 to-amber-600 text-white shadow-lg border border-orange-400'
-                            : 'text-orange-800 hover:bg-gradient-to-r hover:from-orange-100 hover:to-amber-100 hover:text-orange-900 border border-transparent'
+                            : 'text-gray-700 hover:bg-gray-50 hover:text-orange-700 border border-transparent'
                         }`}
                         onClick={() => handleViewChange(dept.id.toString())}
                       >
                         <div className="flex-1">
                           <div className="font-semibold text-sm">{dept.name}</div>
                           <div className={`text-xs flex items-center gap-2 mt-1 ${
-                            selectedView === dept.id.toString() ? 'text-white/90' : 'text-orange-600'
+                            selectedView === dept.id.toString() ? 'text-white/90' : 'text-gray-500'
                           }`}>
                             <span>{deptOfficers} officers</span>
                             <span>•</span>
@@ -285,7 +284,7 @@ export function AgDashboard({ user, departmentsSagas, activities, officers, serv
             <div>
               <button
                 onClick={() => setSagasExpanded(!sagasExpanded)}
-                className="w-full flex items-center justify-between text-sm font-medium text-orange-800 mb-2 p-2 hover:bg-orange-100 rounded-lg transition-colors"
+                className="w-full flex items-center justify-between text-sm font-medium text-gray-700 mb-2 p-2 hover:bg-gray-50 rounded-lg transition-colors"
               >
                 <div className="flex items-center gap-2">
                   <Users className="h-4 w-4" />
@@ -321,14 +320,14 @@ export function AgDashboard({ user, departmentsSagas, activities, officers, serv
                         className={`w-full justify-start text-left h-auto p-4 transition-all duration-300 hover:scale-[1.02] hover:shadow-md ${
                           selectedView === saga.id.toString()
                             ? 'bg-gradient-to-r from-orange-600 to-amber-600 text-white shadow-lg border border-orange-400'
-                            : 'text-orange-800 hover:bg-gradient-to-r hover:from-orange-100 hover:to-amber-100 hover:text-orange-900 border border-transparent'
+                            : 'text-gray-700 hover:bg-gray-50 hover:text-orange-700 border border-transparent'
                         }`}
                         onClick={() => handleViewChange(saga.id.toString())}
                       >
                         <div className="flex-1">
                           <div className="font-semibold text-sm">{saga.name}</div>
                           <div className={`text-xs flex items-center gap-2 mt-1 ${
-                            selectedView === saga.id.toString() ? 'text-white/90' : 'text-orange-600'
+                            selectedView === saga.id.toString() ? 'text-white/90' : 'text-gray-500'
                           }`}>
                             <span>{sagaOfficers} officers</span>
                             <span>•</span>
@@ -344,12 +343,12 @@ export function AgDashboard({ user, departmentsSagas, activities, officers, serv
           </div>
         </ScrollArea>
 
-        {/* Orange-Brown Sign Out Section */}
-        <div className="p-4 border-t border-orange-200 bg-gradient-to-r from-orange-50 to-amber-50">
+        {/* Professional Sign Out Section */}
+        <div className="p-4 border-t border-gray-200 bg-gray-50">
           <Button 
             variant="outline" 
             onClick={handleSignOut} 
-            className="w-full gap-2 text-orange-700 border-orange-300 hover:bg-orange-100 hover:border-orange-400 transition-all duration-300 hover:scale-[1.02] hover:shadow-md font-medium"
+            className="w-full gap-2 text-gray-700 border-gray-300 hover:bg-gray-100 hover:border-orange-400 hover:text-orange-700 transition-all duration-300 hover:scale-[1.02] hover:shadow-md font-medium"
           >
             <LogOut className="h-4 w-4" />
             Sign Out
@@ -369,16 +368,15 @@ export function AgDashboard({ user, departmentsSagas, activities, officers, serv
           <div className="absolute inset-0 bg-gradient-to-tr from-primary-50/30 via-transparent to-gold-50/30" />
         </div>
 
-        {/* Orange-Brown Themed Header */}
+        {/* Professional White Header */}
         <motion.header 
-          className="border-b border-orange-200/60 bg-gradient-to-r from-amber-50/95 via-orange-50/90 to-amber-100/80 backdrop-blur-xl shadow-lg relative z-10"
+          className="border-b border-gray-200 bg-white/95 backdrop-blur-xl shadow-lg relative z-10"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
         >
-          {/* Orange-Brown Accent Stripe */}
+          {/* Orange Accent Stripe */}
           <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-orange-500 via-amber-600 to-orange-600" />
-          <div className="absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-orange-400/40 via-amber-500/50 to-orange-400/40" />
           <div className="px-6 py-5">
             <div className="flex items-center justify-between">
               {/* Enhanced Title Section with Logo */}
@@ -393,12 +391,12 @@ export function AgDashboard({ user, departmentsSagas, activities, officers, serv
                   />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold bg-gradient-to-r from-orange-800 via-orange-600 to-amber-600 bg-clip-text text-transparent">
+                  <h2 className="text-2xl font-bold text-gray-800">
                     {selectedView === "analytics"
                       ? "System Analytics Overview"
                       : selectedDepartmentSaga?.name || "Department/SAGA Details"}
                   </h2>
-                  <p className="text-sm text-orange-700 mt-1 font-medium">
+                  <p className="text-sm text-gray-600 mt-1 font-medium">
                     {selectedView === "analytics"
                       ? "Comprehensive view of all OAG activities and performance"
                       : `${selectedDepartmentSaga?.type.toUpperCase()} • ${selectedActivities.length} activities • ${selectedOfficers.length} officers`}

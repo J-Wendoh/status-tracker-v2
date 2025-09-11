@@ -148,7 +148,7 @@ export function ActivityForm({ services, userId, onSuccess }: ActivityFormProps)
             </SelectTrigger>
             <SelectContent>
               {services.map((service) => (
-                <SelectItem key={service.id} value={service.id}>
+                <SelectItem key={service.id} value={service.id.toString()}>
                   {service.name}
                 </SelectItem>
               ))}
