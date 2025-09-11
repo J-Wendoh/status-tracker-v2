@@ -24,21 +24,57 @@ export default function LoginPage() {
     const supabase = createClient()
 
     try {
+      console.log('[LOGIN] Attempting login for:', email)
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
 
-      if (error) throw error
+      if (error) {
+        console.error('[LOGIN] Authentication error:', error)
+        throw error
+      }
       
-      router.refresh()
-      setTimeout(() => {
-        router.push("/dashboard")
-      }, 100)
+      console.log('[LOGIN] Authentication successful, user:', data.user.email)
+      
+      // Get user profile to determine redirect
+      const { data: profile, error: profileError } = await supabase
+        .from('users')
+        .select('category')
+        .eq('id', data.user.id)
+        .single()
+
+      if (profileError || !profile) {
+        console.error('[LOGIN] Profile fetch error:', profileError)
+        throw new Error('Could not load user profile')
+      }
+
+      console.log('[LOGIN] User profile:', profile.category)
+
+      // Direct redirect based on user category
+      let redirectPath = '/dashboard'
+      switch (profile.category) {
+        case 'Officer':
+          redirectPath = '/dashboard/officer'
+          break
+        case 'HOD':
+        case 'CEO':
+          redirectPath = '/dashboard/hod'
+          break
+        case 'AG':
+          redirectPath = '/dashboard/ag'
+          break
+      }
+
+      console.log('[LOGIN] Redirecting to:', redirectPath)
+      
+      // Use window.location for more reliable redirect
+      window.location.href = redirectPath
+      
     } catch (error: unknown) {
       const errorMsg = error instanceof Error ? error.message : "An error occurred"
+      console.error('[LOGIN] Login failed:', errorMsg)
       setError(errorMsg)
-    } finally {
       setIsLoading(false)
     }
   }
