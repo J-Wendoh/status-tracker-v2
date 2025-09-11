@@ -72,8 +72,23 @@ export default function LoginPage() {
       window.location.href = redirectPath
       
     } catch (error: unknown) {
-      const errorMsg = error instanceof Error ? error.message : "An error occurred"
-      console.error('[LOGIN] Login failed:', errorMsg)
+      console.error('[LOGIN] Login failed:', error)
+      
+      let errorMsg = "An error occurred"
+      
+      if (error instanceof Error) {
+        errorMsg = error.message
+        
+        // Provide more helpful error messages
+        if (error.message.includes('fetch')) {
+          errorMsg = "Network connection failed. Please check your internet connection and try again."
+        } else if (error.message.includes('Invalid login credentials')) {
+          errorMsg = "Invalid email or password. Please check your credentials and try again."
+        } else if (error.message.includes('too many requests')) {
+          errorMsg = "Too many login attempts. Please wait a moment and try again."
+        }
+      }
+      
       setError(errorMsg)
       setIsLoading(false)
     }
