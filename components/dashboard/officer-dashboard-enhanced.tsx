@@ -56,7 +56,6 @@ export function OfficerDashboard({ user, services, activities }: OfficerDashboar
   const navigation = [
     { name: 'Dashboard', href: '/dashboard/officer', icon: HomeIcon, current: true },
     { name: 'Activities', href: '/dashboard/officer/activities', icon: DocumentTextIcon, current: false },
-    { name: 'Analytics', href: '/dashboard/officer', icon: ChartBarIcon, current: false },
   ]
 
   const userInfo = {

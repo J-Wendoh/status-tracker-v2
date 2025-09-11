@@ -52,7 +52,6 @@ export function OfficerActivitiesPage({ user, services, activities }: OfficerAct
   const navigation = [
     { name: 'Dashboard', href: '/dashboard/officer', icon: HomeIcon, current: false },
     { name: 'Activities', href: '/dashboard/officer/activities', icon: DocumentTextIcon, current: true },
-    { name: 'Analytics', href: '/dashboard/officer', icon: ChartBarIcon, current: false },
   ]
 
   const userInfo = {

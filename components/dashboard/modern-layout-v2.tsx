@@ -6,6 +6,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { LoadingPopup } from '../ui/loading-popup'
 import { 
   ChartBarIcon, 
   HomeIcon, 
@@ -38,17 +39,25 @@ interface ModernLayoutProps {
 
 const ModernLayout = ({ children, navigation, userInfo, backgroundImage = '/background02.png', pageTitle = 'Dashboard' }: ModernLayoutProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [isSigningOut, setIsSigningOut] = useState(false)
   const router = useRouter()
 
   const handleSignOut = async () => {
     try {
+      setIsSigningOut(true)
       const supabase = createClient()
-      await supabase.auth.signOut()
-      router.push('/auth/login')
+      const { error } = await supabase.auth.signOut()
+      if (error) {
+        console.error('Sign out error:', error)
+      }
+      // Force redirect regardless of error
+      window.location.href = "/auth/login"
     } catch (error) {
-      console.error('Error signing out:', error)
-      // Still redirect even if there's an error
-      router.push('/auth/login')
+      console.error('Sign out error:', error)
+      // Force redirect on any error
+      window.location.href = "/auth/login"
+    } finally {
+      setIsSigningOut(false)
     }
   }
 
@@ -274,7 +283,8 @@ const ModernLayout = ({ children, navigation, userInfo, backgroundImage = '/back
           
           <motion.button
             onClick={handleSignOut}
-            className="group relative flex items-center w-full px-4 py-3 text-sm font-semibold text-red-600 rounded-2xl hover:bg-red-50/50 hover:text-red-700 transition-all duration-300 backdrop-blur-sm border border-red-100/20 hover:border-red-200/40 hover:shadow-lg overflow-hidden"
+            disabled={isSigningOut}
+            className="group relative flex items-center w-full px-4 py-3 text-sm font-semibold text-red-600 rounded-2xl hover:bg-red-50/50 hover:text-red-700 transition-all duration-300 backdrop-blur-sm border border-red-100/20 hover:border-red-200/40 hover:shadow-lg overflow-hidden disabled:opacity-50"
             whileHover={{ scale: 1.02, x: 4 }}
             whileTap={{ scale: 0.98 }}
             initial={{ opacity: 0, y: 10 }}
@@ -287,8 +297,8 @@ const ModernLayout = ({ children, navigation, userInfo, backgroundImage = '/back
               whileHover={{ x: '100%' }}
               transition={{ duration: 0.6 }}
             />
-            <ArrowRightOnRectangleIcon className="w-5 h-5 mr-3 text-red-400 group-hover:text-red-600 group-hover:translate-x-1 transition-all duration-300" />
-            <span className="relative z-10">Sign out</span>
+            <ArrowRightOnRectangleIcon className={`w-5 h-5 mr-3 text-red-400 group-hover:text-red-600 group-hover:translate-x-1 transition-all duration-300 ${isSigningOut ? 'animate-spin' : ''}`} />
+            <span className="relative z-10">{isSigningOut ? 'Signing Out...' : 'Sign out'}</span>
           </motion.button>
         </div>
       </div>
@@ -455,6 +465,12 @@ const ModernLayout = ({ children, navigation, userInfo, backgroundImage = '/back
           </motion.div>
         </main>
       </div>
+
+      {/* Sign Out Loading Popup */}
+      <LoadingPopup 
+        isVisible={isSigningOut} 
+        message="Signing out securely..."
+      />
     </div>
   )
 }

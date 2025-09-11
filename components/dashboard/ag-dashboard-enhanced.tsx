@@ -67,12 +67,26 @@ export function AgDashboard({ user, departmentsSagas, activities, officers, serv
   const [departmentsExpanded, setDepartmentsExpanded] = useState(true)
   const [sagasExpanded, setSagasExpanded] = useState(true)
   const [isLoading, setIsLoading] = useState(false)
+  const [isSigningOut, setIsSigningOut] = useState(false)
   const router = useRouter()
 
   const handleSignOut = async () => {
-    const supabase = createClient()
-    await supabase.auth.signOut()
-    router.push("/auth/login")
+    try {
+      setIsSigningOut(true)
+      const supabase = createClient()
+      const { error } = await supabase.auth.signOut()
+      if (error) {
+        console.error('Sign out error:', error)
+      }
+      // Force redirect regardless of error
+      window.location.href = "/auth/login"
+    } catch (error) {
+      console.error('Sign out error:', error)
+      // Force redirect on any error
+      window.location.href = "/auth/login"
+    } finally {
+      setIsSigningOut(false)
+    }
   }
 
   // Group departments and SAGAs
@@ -348,10 +362,11 @@ export function AgDashboard({ user, departmentsSagas, activities, officers, serv
           <Button 
             variant="outline" 
             onClick={handleSignOut} 
-            className="w-full gap-2 text-gray-700 border-gray-300 hover:bg-gray-100 hover:border-orange-400 hover:text-orange-700 transition-all duration-300 hover:scale-[1.02] hover:shadow-md font-medium"
+            disabled={isSigningOut}
+            className="w-full gap-2 text-gray-700 border-gray-300 hover:bg-gray-100 hover:border-orange-400 hover:text-orange-700 transition-all duration-300 hover:scale-[1.02] hover:shadow-md font-medium disabled:opacity-50"
           >
-            <LogOut className="h-4 w-4" />
-            Sign Out
+            <LogOut className={`h-4 w-4 ${isSigningOut ? 'animate-spin' : ''}`} />
+            {isSigningOut ? 'Signing Out...' : 'Sign Out'}
           </Button>
         </div>
       </motion.div>
@@ -518,6 +533,12 @@ export function AgDashboard({ user, departmentsSagas, activities, officers, serv
           ? "Loading system analytics..." 
           : `Loading ${departmentsSagas.find(d => d.id.toString() === selectedView)?.name || "department"} data...`
         }
+      />
+
+      {/* Sign Out Loading Popup */}
+      <LoadingPopup 
+        isVisible={isSigningOut} 
+        message="Signing out securely..."
       />
     </div>
   )

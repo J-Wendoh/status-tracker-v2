@@ -5,13 +5,14 @@ export default async function DashboardPage() {
   const timestamp = new Date().toISOString()
   console.log(`[AUTH-DEBUG] ${timestamp} - Dashboard page started`)
 
-  const supabase = await createClient()
-  console.log(`[AUTH-DEBUG] ${timestamp} - Supabase client created`)
+  try {
+    const supabase = await createClient()
+    console.log(`[AUTH-DEBUG] ${timestamp} - Supabase client created`)
 
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser()
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser()
 
   console.log(`[AUTH-DEBUG] ${timestamp} - Auth getUser result:`, {
     hasUser: !!user,

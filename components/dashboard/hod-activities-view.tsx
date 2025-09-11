@@ -219,8 +219,12 @@ export function HodActivitiesView({ user, activities, officers, services }: HodA
             <h2 className="text-lg font-semibold text-neutral-900 mb-4">Activities List</h2>
             {filteredActivities.length > 0 ? (
               <ActivityReviewList 
-                activities={filteredActivities}
-                onActivitySelect={setSelectedActivity}
+                activities={filteredActivities.map(activity => ({
+                  ...activity,
+                  officer: activity.users
+                }))}
+                showActions={true}
+                onStatusUpdate={() => window.location.reload()}
               />
             ) : (
               <div className="text-center py-12">
