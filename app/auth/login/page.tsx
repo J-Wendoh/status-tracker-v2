@@ -25,6 +25,26 @@ export default function LoginPage() {
 
     try {
       console.log('[LOGIN] Attempting login for:', email)
+      console.log('[LOGIN] Environment check:', {
+        url: process.env.NEXT_PUBLIC_SUPABASE_URL,
+        hasKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+        userAgent: navigator.userAgent
+      })
+
+      // Test basic connectivity first
+      console.log('[LOGIN] Testing basic Supabase connectivity...')
+      const connectivityTest = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/settings`, {
+        headers: {
+          'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+        }
+      })
+      console.log('[LOGIN] Connectivity test result:', connectivityTest.status, connectivityTest.statusText)
+
+      if (!connectivityTest.ok) {
+        throw new Error(`Network connectivity failed: ${connectivityTest.status} ${connectivityTest.statusText}`)
+      }
+
+      console.log('[LOGIN] Connectivity OK, proceeding with authentication...')
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -32,12 +52,18 @@ export default function LoginPage() {
 
       if (error) {
         console.error('[LOGIN] Authentication error:', error)
+        console.error('[LOGIN] Error details:', {
+          message: error.message,
+          status: error.status,
+          name: error.name
+        })
         throw error
       }
       
       console.log('[LOGIN] Authentication successful, user:', data.user.email)
       
       // Get user profile to determine redirect
+      console.log('[LOGIN] Fetching user profile...')
       const { data: profile, error: profileError } = await supabase
         .from('users')
         .select('category')
@@ -49,7 +75,7 @@ export default function LoginPage() {
         throw new Error('Could not load user profile')
       }
 
-      console.log('[LOGIN] User profile:', profile.category)
+      console.log('[LOGIN] User profile loaded:', profile.category)
 
       // Direct redirect based on user category
       let redirectPath = '/dashboard'
@@ -80,15 +106,18 @@ export default function LoginPage() {
         errorMsg = error.message
         
         // Provide more helpful error messages
-        if (error.message.includes('fetch')) {
-          errorMsg = "Network connection failed. Please check your internet connection and try again."
+        if (error.message.includes('fetch') || error.message.includes('Failed to fetch')) {
+          errorMsg = "Network connection failed. Please check your internet connection and try again. If the problem persists, please contact support."
         } else if (error.message.includes('Invalid login credentials')) {
           errorMsg = "Invalid email or password. Please check your credentials and try again."
         } else if (error.message.includes('too many requests')) {
           errorMsg = "Too many login attempts. Please wait a moment and try again."
+        } else if (error.message.includes('Network connectivity failed')) {
+          errorMsg = error.message + " Please check your internet connection or try again later."
         }
       }
       
+      console.error('[LOGIN] Final error message:', errorMsg)
       setError(errorMsg)
       setIsLoading(false)
     }
