@@ -65,8 +65,48 @@ interface HodAnalyticsViewProps {
 export function HodAnalyticsView({ user, activities, services, teamMembers }: HodAnalyticsViewProps) {
   const [timeRange, setTimeRange] = useState<'week' | 'month' | 'quarter' | 'year'>('month')
 
-  // Calculate analytics data
+  // Calculate analytics data with error handling
   const analyticsData = useMemo(() => {
+    try {
+      // Validate inputs
+      if (!Array.isArray(activities)) {
+        console.warn('HodAnalyticsView: activities is not an array:', activities)
+        return {
+          totalActivities: 0,
+          totalValue: 0,
+          completedActivities: 0,
+          pendingActivities: 0,
+          serviceStats: [],
+          teamStats: [],
+          dailyTrend: []
+        }
+      }
+      
+      if (!Array.isArray(services)) {
+        console.warn('HodAnalyticsView: services is not an array:', services)
+        return {
+          totalActivities: 0,
+          totalValue: 0,
+          completedActivities: 0,
+          pendingActivities: 0,
+          serviceStats: [],
+          teamStats: [],
+          dailyTrend: []
+        }
+      }
+      
+      if (!Array.isArray(teamMembers)) {
+        console.warn('HodAnalyticsView: teamMembers is not an array:', teamMembers)
+        return {
+          totalActivities: 0,
+          totalValue: 0,
+          completedActivities: 0,
+          pendingActivities: 0,
+          serviceStats: [],
+          teamStats: [],
+          dailyTrend: []
+        }
+      }
     const now = new Date()
     let startDate: Date
 
@@ -157,6 +197,18 @@ export function HodAnalyticsView({ user, activities, services, teamMembers }: Ho
       teamStats,
       dailyTrend
     }
+    } catch (error) {
+      console.error('Error in HodAnalyticsView useMemo calculation:', error)
+      return {
+        totalActivities: 0,
+        totalValue: 0,
+        completedActivities: 0,
+        pendingActivities: 0,
+        serviceStats: [],
+        teamStats: [],
+        dailyTrend: []
+      }
+    }
   }, [activities, services, teamMembers, timeRange])
 
   const navigation = [
@@ -170,6 +222,25 @@ export function HodAnalyticsView({ user, activities, services, teamMembers }: Ho
     name: user?.full_name || 'Unknown User',
     role: 'Head of Department',
     department: user?.departments_sagas?.name || 'Unknown Department'
+  }
+
+  // Additional safety check before rendering
+  if (!analyticsData) {
+    return (
+      <ModernLayout 
+        navigation={navigation} 
+        userInfo={userInfo}
+        backgroundImage="/background03.jpg"
+        pageTitle="Analytics Dashboard"
+      >
+        <div className="flex items-center justify-center min-h-64">
+          <div className="text-center">
+            <h2 className="text-lg font-semibold text-neutral-900 mb-2">Loading Analytics...</h2>
+            <p className="text-neutral-600">Please wait while we prepare your analytics data.</p>
+          </div>
+        </div>
+      </ModernLayout>
+    )
   }
 
   return (
@@ -287,9 +358,10 @@ export function HodAnalyticsView({ user, activities, services, teamMembers }: Ho
         >
           <h2 className="text-lg font-semibold text-neutral-900 mb-6">Service Performance</h2>
           <div className="space-y-4">
-            {analyticsData.serviceStats
-              .sort((a, b) => (b?.totalActivities || 0) - (a?.totalActivities || 0))
-              .map((service, index) => (
+            {(analyticsData?.serviceStats || []).length > 0 ? (
+              analyticsData.serviceStats
+                .sort((a, b) => (b?.totalActivities || 0) - (a?.totalActivities || 0))
+                .map((service, index) => (
               <div key={service?.id || index} className="flex items-center space-x-4">
                 <div className="flex-1">
                   <div className="flex justify-between items-center mb-1">
@@ -315,7 +387,14 @@ export function HodAnalyticsView({ user, activities, services, teamMembers }: Ho
                   <p className="text-xs text-neutral-500">Total output</p>
                 </div>
               </div>
-            ))}
+            ))
+            ) : (
+              <div className="text-center py-8">
+                <ChartBarIcon className="w-12 h-12 text-neutral-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-neutral-900 mb-2">No Service Data</h3>
+                <p className="text-neutral-600">Service performance data will appear here when activities are available.</p>
+              </div>
+            )}
           </div>
         </motion.div>
 
@@ -328,9 +407,10 @@ export function HodAnalyticsView({ user, activities, services, teamMembers }: Ho
         >
           <h2 className="text-lg font-semibold text-neutral-900 mb-6">Team Performance</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {analyticsData.teamStats
-              .sort((a, b) => (b?.totalActivities || 0) - (a?.totalActivities || 0))
-              .map((member, index) => (
+            {(analyticsData?.teamStats || []).length > 0 ? (
+              analyticsData.teamStats
+                .sort((a, b) => (b?.totalActivities || 0) - (a?.totalActivities || 0))
+                .map((member, index) => (
               <div key={member?.id || index} className="border border-neutral-200 rounded-lg p-4">
                 <div className="flex items-center space-x-3 mb-3">
                   <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
@@ -371,7 +451,14 @@ export function HodAnalyticsView({ user, activities, services, teamMembers }: Ho
                   </div>
                 </div>
               </div>
-            ))}
+            ))
+            ) : (
+              <div className="text-center py-8">
+                <UserGroupIcon className="w-12 h-12 text-neutral-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-neutral-900 mb-2">No Team Data</h3>
+                <p className="text-neutral-600">Team performance data will appear here when team members are active.</p>
+              </div>
+            )}
           </div>
         </motion.div>
 
