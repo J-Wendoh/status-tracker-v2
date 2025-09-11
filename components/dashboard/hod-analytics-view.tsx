@@ -288,25 +288,30 @@ export function HodAnalyticsView({ user, activities, services, teamMembers }: Ho
           <h2 className="text-lg font-semibold text-neutral-900 mb-6">Service Performance</h2>
           <div className="space-y-4">
             {analyticsData.serviceStats
-              .sort((a, b) => b.totalActivities - a.totalActivities)
+              .sort((a, b) => (b?.totalActivities || 0) - (a?.totalActivities || 0))
               .map((service, index) => (
-              <div key={service.id} className="flex items-center space-x-4">
+              <div key={service?.id || index} className="flex items-center space-x-4">
                 <div className="flex-1">
                   <div className="flex justify-between items-center mb-1">
-                    <span className="text-sm font-medium text-neutral-700">{service.name}</span>
-                    <span className="text-sm text-neutral-500">{service.totalActivities} activities</span>
+                    <span className="text-sm font-medium text-neutral-700">{service?.name || 'Unknown Service'}</span>
+                    <span className="text-sm text-neutral-500">{service?.totalActivities || 0} activities</span>
                   </div>
                   <div className="w-full bg-neutral-200 rounded-full h-2">
                     <div
                       className="bg-primary-500 h-2 rounded-full transition-all duration-500"
                       style={{ 
-                        width: `${Math.min((service.totalActivities / Math.max(...analyticsData.serviceStats.map(s => s?.totalActivities || 0), 1)) * 100, 100)}%` 
+                        width: `${Math.min(
+                          analyticsData.serviceStats.length > 0 
+                            ? (service.totalActivities / Math.max(...analyticsData.serviceStats.map(s => s?.totalActivities || 0), 1)) * 100
+                            : 0, 
+                          100
+                        )}%` 
                       }}
                     />
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm font-semibold text-neutral-900">{service.totalCount}</p>
+                  <p className="text-sm font-semibold text-neutral-900">{service?.totalCount || 0}</p>
                   <p className="text-xs text-neutral-500">Total output</p>
                 </div>
               </div>
@@ -324,9 +329,9 @@ export function HodAnalyticsView({ user, activities, services, teamMembers }: Ho
           <h2 className="text-lg font-semibold text-neutral-900 mb-6">Team Performance</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {analyticsData.teamStats
-              .sort((a, b) => b.totalActivities - a.totalActivities)
-              .map((member) => (
-              <div key={member.id} className="border border-neutral-200 rounded-lg p-4">
+              .sort((a, b) => (b?.totalActivities || 0) - (a?.totalActivities || 0))
+              .map((member, index) => (
+              <div key={member?.id || index} className="border border-neutral-200 rounded-lg p-4">
                 <div className="flex items-center space-x-3 mb-3">
                   <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
                     <span className="text-primary-600 font-semibold text-sm">
@@ -350,19 +355,19 @@ export function HodAnalyticsView({ user, activities, services, teamMembers }: Ho
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span className="text-sm text-neutral-600">Activities:</span>
-                    <span className="text-sm font-semibold">{member.totalActivities}</span>
+                    <span className="text-sm font-semibold">{member?.totalActivities || 0}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-neutral-600">Total Output:</span>
-                    <span className="text-sm font-semibold">{member.totalCount}</span>
+                    <span className="text-sm font-semibold">{member?.totalCount || 0}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-neutral-600">Avg per Activity:</span>
-                    <span className="text-sm font-semibold">{member.averagePerActivity.toFixed(1)}</span>
+                    <span className="text-sm font-semibold">{(member?.averagePerActivity || 0).toFixed(1)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-neutral-600">Completed:</span>
-                    <span className="text-sm font-semibold text-success-600">{member.completedActivities}</span>
+                    <span className="text-sm font-semibold text-success-600">{member?.completedActivities || 0}</span>
                   </div>
                 </div>
               </div>
