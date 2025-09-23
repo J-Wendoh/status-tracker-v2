@@ -28,7 +28,7 @@ import {
   CalendarIcon,
   UserIcon
 } from "@heroicons/react/24/outline"
-import { TrendingUpIcon } from "@heroicons/react/20/solid"
+import { ArrowTrendingUpIcon } from "@heroicons/react/20/solid"
 import ModernLayout from "./modern-layout-v2"
 import type { User } from "@/lib/supabase/types"
 
@@ -334,7 +334,7 @@ export function HodAnalyticsView({ user, activities, services, teamMembers }: Ho
           
           <div className="bg-white rounded-xl p-6 shadow-card border border-neutral-200">
             <div className="flex items-center">
-              <TrendingUpIcon className="w-8 h-8 text-success-500" />
+              <ArrowTrendingUpIcon className="w-8 h-8 text-success-500" />
               <div className="ml-4">
                 <p className="text-sm font-medium text-neutral-600">Total Output</p>
                 <p className="text-2xl font-bold text-neutral-900">{analyticsData.totalValue}</p>

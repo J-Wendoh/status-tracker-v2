@@ -80,11 +80,11 @@ export default async function HodAnalyticsPage() {
       service_id,
       count,
       created_at,
-      service:service_id (
+      service:services!inner (
         id,
         name
       ),
-      users:user_id (
+      users:users!inner (
         id,
         full_name
       ),

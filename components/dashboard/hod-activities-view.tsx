@@ -40,6 +40,9 @@ interface ActivityWithDetails {
     completed_count: number | null
     status: string
     notes: string | null
+    hod_comment?: string | null
+    hod_reviewed?: boolean
+    hod_reviewed_at?: string | null
     updated_by: string | null
     created_at: string
   }[]
@@ -62,22 +65,22 @@ interface HodActivitiesViewProps {
 
 export function HodActivitiesView({ user, activities, officers, services }: HodActivitiesViewProps) {
   const [selectedActivity, setSelectedActivity] = useState<ActivityWithDetails | null>(null)
-  const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all')
+  const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'complete' | 'incomplete'>('all')
 
   // Filter activities based on status
   const filteredActivities = (activities || []).filter(activity => {
     if (filterStatus === 'all') return true
-    
+
     const latestStatus = activity?.activity_status?.[0]
     if (!latestStatus) return filterStatus === 'pending'
-    
+
     switch (filterStatus) {
       case 'pending':
-        return latestStatus?.status === 'pending' || !latestStatus?.status
-      case 'approved':
-        return latestStatus?.status === 'approved'
-      case 'rejected':
-        return latestStatus?.status === 'rejected'
+        return !latestStatus?.hod_reviewed
+      case 'complete':
+        return latestStatus?.status === 'complete'
+      case 'incomplete':
+        return latestStatus?.status === 'incomplete'
       default:
         return true
     }
@@ -96,18 +99,17 @@ export function HodActivitiesView({ user, activities, officers, services }: HodA
     department: user?.departments_sagas?.name || 'Unknown Department'
   }
 
-  const pendingCount = (activities || []).filter(activity => 
-    !activity?.activity_status?.length || 
-    activity.activity_status?.[0]?.status === 'pending' || 
-    !activity.activity_status?.[0]?.status
+  const pendingCount = (activities || []).filter(activity =>
+    !activity?.activity_status?.length ||
+    !activity.activity_status?.[0]?.hod_reviewed
   ).length
 
-  const approvedCount = (activities || []).filter(activity => 
-    activity?.activity_status?.[0]?.status === 'approved'
+  const completeCount = (activities || []).filter(activity =>
+    activity?.activity_status?.[0]?.status === 'complete'
   ).length
 
-  const rejectedCount = (activities || []).filter(activity => 
-    activity?.activity_status?.[0]?.status === 'rejected'
+  const incompleteCount = (activities || []).filter(activity =>
+    activity?.activity_status?.[0]?.status === 'incomplete'
   ).length
 
   return (
@@ -160,8 +162,8 @@ export function HodActivitiesView({ user, activities, officers, services }: HodA
             <div className="flex items-center">
               <CheckCircleIcon className="w-8 h-8 text-success-500" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-neutral-600">Approved</p>
-                <p className="text-2xl font-bold text-neutral-900">{approvedCount}</p>
+                <p className="text-sm font-medium text-neutral-600">Complete</p>
+                <p className="text-2xl font-bold text-neutral-900">{completeCount}</p>
               </div>
             </div>
           </div>
@@ -172,8 +174,8 @@ export function HodActivitiesView({ user, activities, officers, services }: HodA
                 <span className="text-red-600 font-bold">✕</span>
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-neutral-600">Rejected</p>
-                <p className="text-2xl font-bold text-neutral-900">{rejectedCount}</p>
+                <p className="text-sm font-medium text-neutral-600">Incomplete</p>
+                <p className="text-2xl font-bold text-neutral-900">{incompleteCount}</p>
               </div>
             </div>
           </div>
@@ -189,9 +191,9 @@ export function HodActivitiesView({ user, activities, officers, services }: HodA
           <div className="flex space-x-1 bg-neutral-100 p-1 rounded-xl">
             {[
               { key: 'all', label: 'All Activities', count: (activities || []).length },
-              { key: 'pending', label: 'Pending', count: pendingCount },
-              { key: 'approved', label: 'Approved', count: approvedCount },
-              { key: 'rejected', label: 'Rejected', count: rejectedCount },
+              { key: 'pending', label: 'Pending Review', count: pendingCount },
+              { key: 'complete', label: 'Complete', count: completeCount },
+              { key: 'incomplete', label: 'Incomplete', count: incompleteCount },
             ].map((tab) => (
               <button
                 key={tab.key}
@@ -296,18 +298,41 @@ export function HodActivitiesView({ user, activities, officers, services }: HodA
               </div>
               
               {selectedActivity?.activity_status?.[0] && (
-                <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-1">Status</label>
-                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    selectedActivity.activity_status[0]?.status === 'approved'
-                      ? 'bg-success-100 text-success-800'
-                      : selectedActivity.activity_status[0]?.status === 'rejected'
-                      ? 'bg-error-100 text-error-800'
-                      : 'bg-warning-100 text-warning-800'
-                  }`}>
-                    {selectedActivity.activity_status[0]?.status || 'pending'}
-                  </span>
-                </div>
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">Status</label>
+                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                      selectedActivity.activity_status[0]?.status === 'complete'
+                        ? 'bg-success-100 text-success-800'
+                        : selectedActivity.activity_status[0]?.status === 'incomplete'
+                        ? 'bg-warning-100 text-warning-800'
+                        : 'bg-neutral-100 text-neutral-800'
+                    }`}>
+                      {selectedActivity.activity_status[0]?.status || 'pending review'}
+                    </span>
+                  </div>
+
+                  {selectedActivity.activity_status[0]?.hod_comment && (
+                    <div>
+                      <label className="block text-sm font-medium text-neutral-700 mb-1">HOD Comment</label>
+                      <p className="text-neutral-900 bg-neutral-50 p-3 rounded-lg">
+                        {selectedActivity.activity_status[0].hod_comment}
+                      </p>
+                    </div>
+                  )}
+
+                  {selectedActivity.activity_status[0]?.hod_reviewed && (
+                    <div>
+                      <label className="block text-sm font-medium text-neutral-700 mb-1">Reviewed At</label>
+                      <p className="text-neutral-900">
+                        {selectedActivity.activity_status[0]?.hod_reviewed_at
+                          ? new Date(selectedActivity.activity_status[0].hod_reviewed_at).toLocaleString()
+                          : 'Recently reviewed'
+                        }
+                      </p>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </motion.div>

@@ -7,6 +7,8 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Textarea } from "@/components/ui/textarea"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import {
   Dialog,
   DialogContent,
@@ -41,6 +43,10 @@ interface ActivityWithDetails {
     id: number
     pending_count: number | null
     completed_count: number | null
+    status?: string
+    hod_comment?: string | null
+    hod_reviewed?: boolean
+    hod_reviewed_at?: string | null
     updated_by: string | null
     updated_at: string
   }[]
@@ -58,8 +64,8 @@ export function ActivityReviewList({ activities, showActions, onStatusUpdate }: 
   const [currentPage, setCurrentPage] = useState(1)
   const [selectedActivity, setSelectedActivity] = useState<ActivityWithDetails | null>(null)
   const [statusForm, setStatusForm] = useState({
-    pendingCount: "",
-    completedCount: "",
+    status: "incomplete",
+    hodComment: "",
   })
   const [isLoading, setIsLoading] = useState(false)
   const itemsPerPage = 10
@@ -84,6 +90,22 @@ export function ActivityReviewList({ activities, showActions, onStatusUpdate }: 
     }
 
     const latestStatus = activity.activity_status[0]
+
+    if (latestStatus.status === 'complete') {
+      return (
+        <Badge variant="default" className="bg-green-100 text-green-800">
+          Complete {latestStatus.hod_reviewed && "✓"}
+        </Badge>
+      )
+    } else if (latestStatus.status === 'incomplete') {
+      return (
+        <Badge variant="outline" className="border-orange-200 text-orange-800">
+          Incomplete {latestStatus.hod_reviewed && "✓"}
+        </Badge>
+      )
+    }
+
+    // Legacy status support
     if (latestStatus.completed_count && latestStatus.completed_count > 0) {
       return (
         <Badge variant="default" className="bg-green-100 text-green-800">
@@ -108,21 +130,12 @@ export function ActivityReviewList({ activities, showActions, onStatusUpdate }: 
     const supabase = createClient()
 
     try {
-      const pendingCount = Number.parseInt(statusForm.pendingCount) || 0
-      const completedCount = Number.parseInt(statusForm.completedCount) || 0
-
       console.log("[STATUS-UPDATE] Attempting to update status:", {
         activityId: selectedActivity.id,
-        pendingCount,
-        completedCount,
+        status: statusForm.status,
+        hodComment: statusForm.hodComment,
         totalCount: selectedActivity.count
       })
-
-      if (pendingCount + completedCount > selectedActivity.count) {
-        alert("Total pending and completed count cannot exceed the original count")
-        setIsLoading(false)
-        return
-      }
 
       // Query database for existing status (don't rely on stale page data)
       const { data: existingStatuses, error: fetchError } = await supabase
@@ -133,12 +146,15 @@ export function ActivityReviewList({ activities, showActions, onStatusUpdate }: 
         .limit(1)
 
       console.log("[STATUS-UPDATE] Existing status check:", { existingStatuses, fetchError })
-      
+
       if (fetchError) {
         throw new Error(`Failed to check existing status: ${fetchError.message}`)
       }
 
       const existingStatus = existingStatuses?.[0]
+
+      // Get the current user to mark who reviewed it
+      const { data: { user } } = await supabase.auth.getUser()
 
       if (existingStatus) {
         // Update existing status
@@ -146,8 +162,14 @@ export function ActivityReviewList({ activities, showActions, onStatusUpdate }: 
         const { data, error } = await supabase
           .from("activity_status")
           .update({
-            pending_count: pendingCount,
-            completed_count: completedCount,
+            status: statusForm.status,
+            hod_comment: statusForm.hodComment || null,
+            hod_reviewed: true,
+            hod_reviewed_at: new Date().toISOString(),
+            updated_by: user?.id,
+            // Set counts based on status
+            pending_count: statusForm.status === 'incomplete' ? selectedActivity.count : 0,
+            completed_count: statusForm.status === 'complete' ? selectedActivity.count : 0,
           })
           .eq("id", existingStatus.id)
 
@@ -158,8 +180,14 @@ export function ActivityReviewList({ activities, showActions, onStatusUpdate }: 
         console.log("[STATUS-UPDATE] Creating new status for activity:", selectedActivity.id)
         const { data, error } = await supabase.from("activity_status").insert({
           activity_id: selectedActivity.id,
-          pending_count: pendingCount,
-          completed_count: completedCount,
+          status: statusForm.status,
+          hod_comment: statusForm.hodComment || null,
+          hod_reviewed: true,
+          hod_reviewed_at: new Date().toISOString(),
+          updated_by: user?.id,
+          // Set counts based on status
+          pending_count: statusForm.status === 'incomplete' ? selectedActivity.count : 0,
+          completed_count: statusForm.status === 'complete' ? selectedActivity.count : 0,
         })
 
         console.log("[STATUS-UPDATE] Insert result:", { data, error })
@@ -168,7 +196,7 @@ export function ActivityReviewList({ activities, showActions, onStatusUpdate }: 
 
       console.log("[STATUS-UPDATE] Status update successful, refreshing...")
       setSelectedActivity(null)
-      setStatusForm({ pendingCount: "", completedCount: "" })
+      setStatusForm({ status: "incomplete", hodComment: "" })
       onStatusUpdate()
     } catch (error) {
       console.error("[STATUS-UPDATE] Error updating status:", error)
@@ -183,11 +211,11 @@ export function ActivityReviewList({ activities, showActions, onStatusUpdate }: 
     const existingStatus = activity.activity_status[0]
     if (existingStatus) {
       setStatusForm({
-        pendingCount: (existingStatus.pending_count || 0).toString(),
-        completedCount: (existingStatus.completed_count || 0).toString(),
+        status: existingStatus.status || (existingStatus.completed_count && existingStatus.completed_count > 0 ? "complete" : "incomplete"),
+        hodComment: existingStatus.hod_comment || "",
       })
     } else {
-      setStatusForm({ pendingCount: "", completedCount: "" })
+      setStatusForm({ status: "incomplete", hodComment: "" })
     }
   }
 
@@ -295,44 +323,52 @@ export function ActivityReviewList({ activities, showActions, onStatusUpdate }: 
                       </DialogTrigger>
                       <DialogContent>
                         <DialogHeader>
-                          <DialogTitle>Update Activity Status</DialogTitle>
+                          <DialogTitle>Review Activity Status</DialogTitle>
                           <DialogDescription>
-                            Update the progress status for {activity.officer.full_name}'s activity: {activity.service.name}
+                            Review the activity submitted by {activity.officer.full_name}
                           </DialogDescription>
                         </DialogHeader>
                         <div className="grid gap-4 py-4">
                           <div className="grid gap-2">
                             <Label>Activity Details</Label>
-                            <div className="text-sm text-muted-foreground">
-                              <p>Total Count: {activity.count}</p>
-                              {activity.description && <p>Description: {activity.description}</p>}
+                            <div className="text-sm text-muted-foreground space-y-1">
+                              <p><strong>Service:</strong> {activity.service.name}</p>
+                              <p><strong>Total Count:</strong> {activity.count}</p>
+                              {activity.description && <p><strong>Description:</strong> {activity.description}</p>}
+                              <p><strong>Submitted:</strong> {format(new Date(activity.created_at), "MMM dd, yyyy 'at' h:mm a")}</p>
                             </div>
                           </div>
-                          <div className="grid grid-cols-2 gap-4">
-                            <div className="grid gap-2">
-                              <Label htmlFor="pending">Pending Count</Label>
-                              <Input
-                                id="pending"
-                                type="number"
-                                min="0"
-                                max={activity.count}
-                                value={statusForm.pendingCount}
-                                onChange={(e) => setStatusForm((prev) => ({ ...prev, pendingCount: e.target.value }))}
-                                placeholder="0"
-                              />
-                            </div>
-                            <div className="grid gap-2">
-                              <Label htmlFor="completed">Completed Count</Label>
-                              <Input
-                                id="completed"
-                                type="number"
-                                min="0"
-                                max={activity.count}
-                                value={statusForm.completedCount}
-                                onChange={(e) => setStatusForm((prev) => ({ ...prev, completedCount: e.target.value }))}
-                                placeholder="0"
-                              />
-                            </div>
+
+                          <div className="grid gap-2">
+                            <Label>Status</Label>
+                            <RadioGroup
+                              value={statusForm.status}
+                              onValueChange={(value) => setStatusForm((prev) => ({ ...prev, status: value }))}
+                            >
+                              <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="incomplete" id="incomplete" />
+                                <Label htmlFor="incomplete" className="font-normal">
+                                  Incomplete - Activity needs more work
+                                </Label>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="complete" id="complete" />
+                                <Label htmlFor="complete" className="font-normal">
+                                  Complete - Activity meets requirements
+                                </Label>
+                              </div>
+                            </RadioGroup>
+                          </div>
+
+                          <div className="grid gap-2">
+                            <Label htmlFor="comment">HOD Comment (Optional)</Label>
+                            <Textarea
+                              id="comment"
+                              value={statusForm.hodComment}
+                              onChange={(e) => setStatusForm((prev) => ({ ...prev, hodComment: e.target.value }))}
+                              placeholder="Add any feedback or notes about this activity..."
+                              rows={3}
+                            />
                           </div>
                         </div>
                         <DialogFooter>
