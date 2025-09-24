@@ -2,7 +2,7 @@ import { createServerClient } from "@supabase/ssr"
 import { NextResponse, type NextRequest } from "next/server"
 
 export async function updateSession(request: NextRequest) {
-  console.log("[v0] Middleware - Processing request:", request.nextUrl.pathname)
+  console.log("[AG-TRACKER] Middleware - Processing request:", request.nextUrl.pathname)
 
   let supabaseResponse = NextResponse.next({
     request,
@@ -33,7 +33,7 @@ export async function updateSession(request: NextRequest) {
     error,
   } = await supabase.auth.getUser()
 
-  console.log("[v0] Middleware - Session state:", {
+  console.log("[AG-TRACKER] Middleware - Session state:", {
     hasSession: !!user,
     hasUser: !!user,
     userId: user?.id,
@@ -47,7 +47,7 @@ export async function updateSession(request: NextRequest) {
   const requiresAuth = !isAuthPath
 
   if (requiresAuth && !user) {
-    console.log("[v0] Middleware - Redirecting to login: no user found")
+    console.log("[AG-TRACKER] Middleware - Redirecting to login: no user found")
     const url = request.nextUrl.clone()
     url.pathname = "/auth/login"
     return NextResponse.redirect(url)
@@ -57,10 +57,10 @@ export async function updateSession(request: NextRequest) {
   if (user) {
     const { data: { session } } = await supabase.auth.getSession()
     if (session) {
-      console.log("[v0] Middleware - Session refreshed for user:", user.email)
+      console.log("[AG-TRACKER] Middleware - Session refreshed for user:", user.email)
     }
   }
 
-  console.log("[v0] Middleware - Auth check passed, continuing to:", request.nextUrl.pathname)
+  console.log("[AG-TRACKER] Middleware - Auth check passed, continuing to:", request.nextUrl.pathname)
   return supabaseResponse
 }

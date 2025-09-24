@@ -39,7 +39,7 @@ export default async function HodDashboardPage() {
     .eq("id", user.id)
     .single()
 
-  console.log("[v0] HOD - User profile query result:", {
+  console.log("[AG-TRACKER] HOD - User profile query result:", {
     userProfile,
     profileError: profileError?.message,
     hasProfile: !!userProfile,
@@ -47,18 +47,18 @@ export default async function HodDashboardPage() {
   })
 
   if (profileError || !userProfile) {
-    console.log("[v0] HOD - Profile error or missing profile, redirecting to dashboard")
+    console.log("[AG-TRACKER] HOD - Profile error or missing profile, redirecting to dashboard")
     redirect("/dashboard")
   }
 
   if (!["HOD", "CEO"].includes(userProfile.category)) {
-    console.log("[v0] HOD - User category is not HOD/CEO:", userProfile.category)
+    console.log("[AG-TRACKER] HOD - User category is not HOD/CEO:", userProfile.category)
     redirect("/dashboard")
   }
 
   // Check if user has department assignment
   if (!userProfile.department_saga_id) {
-    console.log("[v0] HOD - User has no department assignment, redirecting to dashboard")
+    console.log("[AG-TRACKER] HOD - User has no department assignment, redirecting to dashboard")
     redirect("/dashboard")
   }
 
@@ -68,7 +68,7 @@ export default async function HodDashboardPage() {
     .select("id")
     .eq("department_saga_id", userProfile.department_saga_id)
 
-  console.log("[v0] HOD - Department services query result:", {
+  console.log("[AG-TRACKER] HOD - Department services query result:", {
     departmentServices,
     servicesError: servicesError?.message,
     servicesCount: departmentServices?.length || 0,
@@ -84,7 +84,7 @@ export default async function HodDashboardPage() {
     .in("service_id", serviceIds)
     .order("created_at", { ascending: false })
   
-  console.log("[v0] HOD - Simple activities query result:", {
+  console.log("[AG-TRACKER] HOD - Simple activities query result:", {
     activities,
     activitiesError: activitiesError?.message,
     activitiesCount: activities?.length || 0,
@@ -122,7 +122,7 @@ export default async function HodDashboardPage() {
       }
     })
     
-    console.log("[v0] HOD - Latest status per activity:", Object.fromEntries(latestStatusPerActivity))
+    console.log("[AG-TRACKER] HOD - Latest status per activity:", Object.fromEntries(latestStatusPerActivity))
     
     // Combine the data
     activitiesWithDetails = activities.map(activity => ({
@@ -133,7 +133,7 @@ export default async function HodDashboardPage() {
     }))
   }
 
-  console.log("[v0] HOD - Activities query result:", {
+  console.log("[AG-TRACKER] HOD - Activities query result:", {
     activities,
     activitiesError: activitiesError?.message,
     activitiesCount: activities?.length || 0,
@@ -146,7 +146,7 @@ export default async function HodDashboardPage() {
     .in("category", ["Officer", "HOD", "CEO"])
     .order("full_name")
 
-  console.log("[v0] HOD - Officers query result:", {
+  console.log("[AG-TRACKER] HOD - Officers query result:", {
     officers,
     officersError: officersError?.message,
     officersCount: officers?.length || 0,
@@ -158,7 +158,7 @@ export default async function HodDashboardPage() {
     .eq("department_saga_id", userProfile.department_saga_id)
     .order("name")
 
-  console.log("[v0] HOD - All services query result:", {
+  console.log("[AG-TRACKER] HOD - All services query result:", {
     services,
     allServicesError: allServicesError?.message,
     allServicesCount: services?.length || 0,
@@ -166,7 +166,7 @@ export default async function HodDashboardPage() {
 
   // Final validation before rendering
   if (!userProfile.departments_sagas) {
-    console.log("[v0] HOD - Missing departments_sagas relation, redirecting to dashboard")
+    console.log("[AG-TRACKER] HOD - Missing departments_sagas relation, redirecting to dashboard")
     redirect("/dashboard")
   }
 

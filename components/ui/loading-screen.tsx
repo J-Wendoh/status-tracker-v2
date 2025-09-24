@@ -117,7 +117,7 @@ export function LoadingScreen({ isLoading, progress = 0, message }: LoadingScree
                   ease: "easeInOut"
                 }}
               >
-                OAG
+                AG
               </motion.div>
             </div>
             <motion.h1 
@@ -126,7 +126,7 @@ export function LoadingScreen({ isLoading, progress = 0, message }: LoadingScree
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
             >
-              OAG Activity Tracker
+              AG Status Tracker
             </motion.h1>
             <motion.p 
               className="text-lg text-[#BE6400] font-semibold"

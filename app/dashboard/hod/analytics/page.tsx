@@ -40,7 +40,7 @@ export default async function HodAnalyticsPage() {
     .eq("id", user.id)
     .single()
 
-  console.log("[v0] HOD Analytics - User profile query result:", {
+  console.log("[AG-TRACKER] HOD Analytics - User profile query result:", {
     userProfile,
     profileError: profileError?.message,
     hasProfile: !!userProfile,
@@ -48,18 +48,18 @@ export default async function HodAnalyticsPage() {
   })
 
   if (profileError || !userProfile) {
-    console.log("[v0] HOD Analytics - Profile error or missing profile, redirecting to dashboard")
+    console.log("[AG-TRACKER] HOD Analytics - Profile error or missing profile, redirecting to dashboard")
     redirect("/dashboard")
   }
 
   if (!["HOD", "CEO"].includes(userProfile.category)) {
-    console.log("[v0] HOD Analytics - User category is not HOD/CEO:", userProfile.category)
+    console.log("[AG-TRACKER] HOD Analytics - User category is not HOD/CEO:", userProfile.category)
     redirect("/dashboard")
   }
 
   // Check if user has department assignment
   if (!userProfile.department_saga_id) {
-    console.log("[v0] HOD Analytics - User has no department assignment, redirecting to dashboard")
+    console.log("[AG-TRACKER] HOD Analytics - User has no department assignment, redirecting to dashboard")
     redirect("/dashboard")
   }
 
@@ -98,7 +98,7 @@ export default async function HodAnalyticsPage() {
     .in("service_id", serviceIds)
     .order("created_at", { ascending: false })
 
-  console.log("[v0] HOD Analytics - Activities query result:", {
+  console.log("[AG-TRACKER] HOD Analytics - Activities query result:", {
     activities,
     activitiesError: activitiesError?.message,
     activitiesCount: activities?.length || 0,
@@ -112,7 +112,7 @@ export default async function HodAnalyticsPage() {
     .in("category", ["Officer", "HOD", "CEO"])
     .order("full_name")
 
-  console.log("[v0] HOD Analytics - Team members query result:", {
+  console.log("[AG-TRACKER] HOD Analytics - Team members query result:", {
     teamMembers,
     teamError: teamError?.message,
     teamCount: teamMembers?.length || 0,
@@ -120,7 +120,7 @@ export default async function HodAnalyticsPage() {
 
   // Final validation before rendering
   if (!userProfile.departments_sagas) {
-    console.log("[v0] HOD Analytics - Missing departments_sagas relation, redirecting to dashboard")
+    console.log("[AG-TRACKER] HOD Analytics - Missing departments_sagas relation, redirecting to dashboard")
     redirect("/dashboard")
   }
 

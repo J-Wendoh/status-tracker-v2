@@ -115,8 +115,8 @@ const ModernLayout = ({ children, navigation, userInfo }: ModernLayoutProps) => 
                 />
               </div>
               <div className="hidden lg:block">
-                <h1 className="text-lg font-bold text-neutral-900">OAG System</h1>
-                <p className="text-xs text-neutral-600">Activity Tracking</p>
+                <h1 className="text-lg font-bold text-neutral-900">AG Status Tracker</h1>
+                <p className="text-xs text-neutral-600">Attorney General Office</p>
               </div>
             </div>
             <button

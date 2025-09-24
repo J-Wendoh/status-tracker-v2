@@ -39,7 +39,7 @@ export default async function HodTeamPage() {
     .eq("id", user.id)
     .single()
 
-  console.log("[v0] HOD Team - User profile query result:", {
+  console.log("[AG-TRACKER] HOD Team - User profile query result:", {
     userProfile,
     profileError: profileError?.message,
     hasProfile: !!userProfile,
@@ -47,18 +47,18 @@ export default async function HodTeamPage() {
   })
 
   if (profileError || !userProfile) {
-    console.log("[v0] HOD Team - Profile error or missing profile, redirecting to dashboard")
+    console.log("[AG-TRACKER] HOD Team - Profile error or missing profile, redirecting to dashboard")
     redirect("/dashboard")
   }
 
   if (!["HOD", "CEO"].includes(userProfile.category)) {
-    console.log("[v0] HOD Team - User category is not HOD/CEO:", userProfile.category)
+    console.log("[AG-TRACKER] HOD Team - User category is not HOD/CEO:", userProfile.category)
     redirect("/dashboard")
   }
 
   // Check if user has department assignment
   if (!userProfile.department_saga_id) {
-    console.log("[v0] HOD Team - User has no department assignment, redirecting to dashboard")
+    console.log("[AG-TRACKER] HOD Team - User has no department assignment, redirecting to dashboard")
     redirect("/dashboard")
   }
 
@@ -78,7 +78,7 @@ export default async function HodTeamPage() {
     .in("category", ["Officer", "HOD", "CEO"])
     .order("full_name")
 
-  console.log("[v0] HOD Team - Team members query result:", {
+  console.log("[AG-TRACKER] HOD Team - Team members query result:", {
     teamMembers,
     teamError: teamError?.message,
     teamCount: teamMembers?.length || 0,
@@ -107,7 +107,7 @@ export default async function HodTeamPage() {
     `)
     .in("service_id", serviceIds)
 
-  console.log("[v0] HOD Team - Activity stats query result:", {
+  console.log("[AG-TRACKER] HOD Team - Activity stats query result:", {
     activityStats,
     statsError: statsError?.message,
     statsCount: activityStats?.length || 0,
@@ -115,7 +115,7 @@ export default async function HodTeamPage() {
 
   // Final validation before rendering
   if (!userProfile.departments_sagas) {
-    console.log("[v0] HOD Team - Missing departments_sagas relation, redirecting to dashboard")
+    console.log("[AG-TRACKER] HOD Team - Missing departments_sagas relation, redirecting to dashboard")
     redirect("/dashboard")
   }
 

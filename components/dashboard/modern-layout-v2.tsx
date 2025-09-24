@@ -114,21 +114,21 @@ const ModernLayout = ({ children, navigation, userInfo, backgroundImage = '/back
               />
             </motion.div>
             <div>
-              <motion.h1 
+              <motion.h1
                 className="text-xl font-bold bg-gradient-to-r from-neutral-800 via-[#BE6400] to-neutral-800 bg-clip-text text-transparent"
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.1 }}
               >
-                OAG System
+                AG Status Tracker
               </motion.h1>
-              <motion.p 
+              <motion.p
                 className="text-sm text-neutral-600 font-medium tracking-wide"
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.2 }}
               >
-                Activity Tracking Platform
+                Attorney General Office System
               </motion.p>
             </div>
           </div>

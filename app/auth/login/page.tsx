@@ -198,7 +198,7 @@ export default function LoginPage() {
               Office of the Attorney General
             </h1>
             <p className="text-neutral-600 text-sm">
-              Activity Tracking System
+              AG Status Tracker System
             </p>
           </motion.div>
 

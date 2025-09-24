@@ -29,7 +29,7 @@ export default async function OfficerDashboardPage() {
     .eq("id", user.id)
     .single()
 
-  console.log("[v0] Officer - User profile query result:", {
+  console.log("[AG-TRACKER] Officer - User profile query result:", {
     userProfile,
     profileError: profileError?.message,
     hasProfile: !!userProfile,
@@ -37,12 +37,12 @@ export default async function OfficerDashboardPage() {
   })
 
   if (profileError || !userProfile) {
-    console.log("[v0] Officer - Profile error or missing profile, redirecting to dashboard")
+    console.log("[AG-TRACKER] Officer - Profile error or missing profile, redirecting to dashboard")
     redirect("/dashboard")
   }
 
   if (userProfile.category !== "Officer") {
-    console.log("[v0] Officer - User category is not Officer:", userProfile.category)
+    console.log("[AG-TRACKER] Officer - User category is not Officer:", userProfile.category)
     redirect("/dashboard")
   }
 
@@ -52,7 +52,7 @@ export default async function OfficerDashboardPage() {
     .eq("department_saga_id", userProfile.department_saga_id)
     .order("name")
 
-  console.log("[v0] Officer - Services query result:", {
+  console.log("[AG-TRACKER] Officer - Services query result:", {
     services,
     servicesError: servicesError?.message,
     servicesCount: services?.length || 0,
@@ -76,7 +76,7 @@ export default async function OfficerDashboardPage() {
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
 
-  console.log("[v0] Officer - Activities query result:", {
+  console.log("[AG-TRACKER] Officer - Activities query result:", {
     activities,
     activitiesError: activitiesError?.message,
     activitiesCount: activities?.length || 0,
@@ -84,7 +84,7 @@ export default async function OfficerDashboardPage() {
 
   // Ensure we have the minimum required data
   if (!userProfile.departments_sagas) {
-    console.log("[v0] Officer - Missing department/saga data, redirecting to dashboard")
+    console.log("[AG-TRACKER] Officer - Missing department/saga data, redirecting to dashboard")
     redirect("/dashboard")
   }
 
