@@ -1,7 +1,14 @@
 {
   "name": "ag-status-tracker-system",
   "version": "0.1.0",
-  "private": true,
+  "private": false,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/J-Wendoh/status-tracker-v2.git"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
   "scripts": {
     "build": "next build",
     "dev": "next dev",
