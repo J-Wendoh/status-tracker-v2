@@ -38,11 +38,22 @@ error() {
 check_dependencies() {
     log "Checking dependencies..."
 
-    for cmd in docker docker-compose git curl; do
+    for cmd in docker git curl; do
         if ! command -v $cmd &> /dev/null; then
             error "$cmd is not installed. Please install it first."
         fi
     done
+
+    # Check Docker Compose
+    if docker compose version &> /dev/null; then
+        log "Using docker compose (plugin)"
+        COMPOSE_CMD="docker compose"
+    elif command -v docker-compose &> /dev/null; then
+        log "Using docker-compose (standalone)"
+        COMPOSE_CMD="docker-compose"
+    else
+        error "Docker Compose is not installed. Please install it first."
+    fi
 
     success "All dependencies are available"
 }
@@ -90,11 +101,11 @@ deploy_application() {
 
     # Stop existing containers
     log "Stopping existing containers..."
-    docker-compose -f docker-compose.prod.yml down || true
+    $COMPOSE_CMD -f docker-compose.prod.yml down || true
 
     # Start new containers
     log "Starting new containers..."
-    docker-compose -f docker-compose.prod.yml up -d
+    $COMPOSE_CMD -f docker-compose.prod.yml up -d
 
     # Wait for containers to be healthy
     log "Waiting for application to be ready..."
@@ -140,11 +151,11 @@ cleanup_old_images() {
 show_status() {
     log "Application Status:"
     echo "==================="
-    docker-compose -f docker-compose.prod.yml ps
+    $COMPOSE_CMD -f docker-compose.prod.yml ps
     echo ""
     log "Application Logs (last 20 lines):"
     echo "=================================="
-    docker-compose -f docker-compose.prod.yml logs --tail=20
+    $COMPOSE_CMD -f docker-compose.prod.yml logs --tail=20
 }
 
 # Main deployment process
@@ -176,16 +187,16 @@ case "${1:-deploy}" in
         show_status
         ;;
     "logs")
-        docker-compose -f docker-compose.prod.yml logs -f
+        $COMPOSE_CMD -f docker-compose.prod.yml logs -f
         ;;
     "stop")
         log "Stopping application..."
-        docker-compose -f docker-compose.prod.yml down
+        $COMPOSE_CMD -f docker-compose.prod.yml down
         success "Application stopped"
         ;;
     "restart")
         log "Restarting application..."
-        docker-compose -f docker-compose.prod.yml restart
+        $COMPOSE_CMD -f docker-compose.prod.yml restart
         success "Application restarted"
         ;;
     "backup")
