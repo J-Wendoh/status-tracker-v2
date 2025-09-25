@@ -72,7 +72,11 @@ export default async function AgDashboardPage() {
         pending_count,
         completed_count,
         updated_by,
-        created_at
+        created_at,
+        status,
+        hod_comment,
+        hod_reviewed,
+        hod_reviewed_at
       )
     `)
     .order("created_at", { ascending: false })

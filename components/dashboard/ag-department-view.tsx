@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Progress } from "@/components/ui/progress"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
-import { Search, FileText, Users, TrendingUp, Calendar, ExternalLink, Building } from "lucide-react"
+import { Search, FileText, Users, TrendingUp, Calendar, ExternalLink, Building, MessageCircle } from "lucide-react"
 import { format } from "date-fns"
 import type { DepartmentSaga, Service } from "@/lib/supabase/types"
 
@@ -41,6 +41,10 @@ interface ActivityWithFullDetails {
     completed_count: number | null
     updated_by: string | null
     created_at: string
+    status?: string
+    hod_comment?: string | null
+    hod_reviewed?: boolean
+    hod_reviewed_at?: string | null
   }[]
 }
 
@@ -302,6 +306,7 @@ export function AgDepartmentView({ departmentSaga, activities, officers, service
                         <TableHead>Service</TableHead>
                         <TableHead>Count</TableHead>
                         <TableHead>Status</TableHead>
+                        <TableHead>HOD Comment</TableHead>
                         <TableHead>Date</TableHead>
                         <TableHead>File</TableHead>
                       </TableRow>
@@ -329,6 +334,23 @@ export function AgDepartmentView({ departmentSaga, activities, officers, service
                             <span className="font-medium">{activity.count}</span>
                           </TableCell>
                           <TableCell>{getStatusBadge(activity)}</TableCell>
+                          <TableCell>
+                            {activity?.activity_status && activity.activity_status.length > 0 && activity.activity_status[0]?.hod_comment ? (
+                              <div className="flex items-start gap-2 max-w-xs">
+                                <MessageCircle className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
+                                <div className="text-sm text-gray-700 bg-blue-50 p-2 rounded-lg border border-blue-200">
+                                  {activity.activity_status[0].hod_comment}
+                                  {activity.activity_status[0].hod_reviewed_at && (
+                                    <div className="text-xs text-blue-600 mt-1">
+                                      Reviewed {format(new Date(activity.activity_status[0].hod_reviewed_at), "MMM dd, yyyy")}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            ) : (
+                              <span className="text-muted-foreground text-sm">No comment</span>
+                            )}
+                          </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-1 text-sm text-muted-foreground">
                               <Calendar className="h-3 w-3" />

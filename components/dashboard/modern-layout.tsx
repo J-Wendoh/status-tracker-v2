@@ -128,21 +128,21 @@ const ModernLayout = ({ children, navigation, userInfo }: ModernLayoutProps) => 
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 px-4 py-6 space-y-2">
+          <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
             {navigation.map((item) => {
               const IconComponent = item.icon
               return (
                 <Link
                   key={item.name}
                   href={item.href}
-                  className={`group flex items-center px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
+                  className={`group flex items-center px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 hover:scale-105 hover:shadow-sm ${
                     item.current
-                      ? 'bg-primary-50 text-primary-700 border border-primary-200'
-                      : 'text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900'
+                      ? 'bg-gradient-to-r from-primary-50 to-primary-100 text-primary-700 border border-primary-200 shadow-sm'
+                      : 'text-neutral-700 hover:bg-gradient-to-r hover:from-neutral-50 hover:to-neutral-100 hover:text-neutral-900'
                   }`}
                 >
-                  <IconComponent 
-                    className={`mr-3 h-5 w-5 transition-colors ${
+                  <IconComponent
+                    className={`mr-4 h-5 w-5 transition-colors ${
                       item.current ? 'text-primary-500' : 'text-neutral-600 group-hover:text-neutral-700'
                     }`}
                   />
@@ -152,42 +152,50 @@ const ModernLayout = ({ children, navigation, userInfo }: ModernLayoutProps) => 
             })}
           </nav>
 
-          {/* User Profile */}
-          <div className="border-t border-neutral-100 p-4">
-            <div className="flex items-center space-x-3 mb-4">
-              <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-xl flex items-center justify-center">
-                <span className="text-white font-bold text-sm">
-                  {userInfo.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                </span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-neutral-900 truncate">
-                  {userInfo.name}
-                </p>
-                <p className="text-xs text-neutral-600 truncate">
-                  {userInfo.role}
-                </p>
-                {userInfo.department && (
-                  <p className="text-xs text-neutral-500 truncate">
-                    {userInfo.department}
+          {/* Settings in middle area */}
+          <div className="px-4 py-2">
+            <Link
+              href="/settings"
+              className="flex items-center px-4 py-3 text-sm text-neutral-700 rounded-xl hover:bg-gradient-to-r hover:from-neutral-50 hover:to-neutral-100 hover:text-neutral-900 transition-all duration-200 hover:scale-105 hover:shadow-sm"
+            >
+              <Cog6ToothIcon className="w-5 h-5 mr-4 text-neutral-600" />
+              Settings
+            </Link>
+          </div>
+
+          {/* User Profile Section - Absolutely at Bottom with No Gaps */}
+          <div className="mt-auto bg-gradient-to-br from-neutral-50 to-white border-t border-neutral-200">
+            {/* User Info */}
+            <div className="px-4 py-4 border-b border-neutral-100">
+              <div className="flex items-center space-x-3">
+                <div className="w-12 h-12 bg-gradient-to-br from-primary-500 via-primary-600 to-secondary-500 rounded-xl flex items-center justify-center shadow-lg">
+                  <span className="text-white font-bold text-sm">
+                    {userInfo.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                  </span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-neutral-900 truncate">
+                    {userInfo.name}
                   </p>
-                )}
+                  <p className="text-xs text-neutral-600 truncate font-medium">
+                    {userInfo.role}
+                  </p>
+                  {userInfo.department && (
+                    <p className="text-xs text-neutral-500 truncate">
+                      {userInfo.department}
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
-            
-            <div className="space-y-1">
-              <Link
-                href="/settings"
-                className="flex items-center px-3 py-2 text-sm text-neutral-700 rounded-lg hover:bg-neutral-100 transition-colors"
-              >
-                <Cog6ToothIcon className="w-4 h-4 mr-2 text-neutral-600" />
-                Settings
-              </Link>
+
+            {/* Sign Out Button - Absolute Bottom */}
+            <div className="px-4 py-4">
               <Link
                 href="/auth/logout"
-                className="flex items-center px-3 py-2 text-sm text-red-700 rounded-lg hover:bg-red-50 transition-colors"
+                className="flex items-center justify-center w-full px-4 py-3 text-sm font-medium text-red-700 bg-red-50 rounded-lg hover:bg-red-100 hover:shadow-sm transition-all duration-200 hover:scale-105"
               >
-                <ArrowRightOnRectangleIcon className="w-4 h-4 mr-2 text-red-400" />
+                <ArrowRightOnRectangleIcon className="w-4 h-4 mr-2 text-red-500" />
                 Sign out
               </Link>
             </div>

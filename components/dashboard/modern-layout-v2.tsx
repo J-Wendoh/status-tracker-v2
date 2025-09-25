@@ -12,7 +12,6 @@ import {
   HomeIcon, 
   UserGroupIcon,
   DocumentTextIcon,
-  Cog6ToothIcon,
   Bars3Icon,
   XMarkIcon,
   ArrowRightOnRectangleIcon
@@ -23,6 +22,7 @@ interface NavigationItem {
   href: string
   icon: any
   current?: boolean
+  badge?: string
 }
 
 interface ModernLayoutProps {
@@ -35,9 +35,10 @@ interface ModernLayoutProps {
   }
   backgroundImage?: string
   pageTitle?: string
+  onNavigationClick?: (href: string) => void
 }
 
-const ModernLayout = ({ children, navigation, userInfo, backgroundImage = '/background02.png', pageTitle = 'Dashboard' }: ModernLayoutProps) => {
+const ModernLayout = ({ children, navigation, userInfo, backgroundImage = '/background02.png', pageTitle = 'Dashboard', onNavigationClick }: ModernLayoutProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [isSigningOut, setIsSigningOut] = useState(false)
   const router = useRouter()
@@ -61,10 +62,6 @@ const ModernLayout = ({ children, navigation, userInfo, backgroundImage = '/back
     }
   }
 
-  const handleSettings = () => {
-    // Navigate to settings page based on user role
-    router.push('/settings')
-  }
 
   const sidebarVariants = {
     open: {
@@ -154,57 +151,133 @@ const ModernLayout = ({ children, navigation, userInfo, backgroundImage = '/back
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: index * 0.1 + 0.3 }}
             >
-              <Link
-                href={item.href}
-                className={`group relative flex items-center px-5 py-4 rounded-2xl text-sm font-semibold transition-all duration-500 hover:scale-[1.02] hover:shadow-xl overflow-hidden ${
-                  item.current
-                    ? 'bg-gradient-to-r from-[#BE6400] to-[#BE6400]/80 text-white shadow-2xl ring-1 ring-[#BE6400]/20 hover:shadow-2xl hover:shadow-[#BE6400]/25'
-                    : 'text-neutral-700 hover:bg-white/50 hover:text-[#BE6400] backdrop-blur-sm border border-white/10 hover:border-[#BE6400]/20'
-                }`}
-              >
-                {/* Glow effect for active item */}
-                {item.current && (
-                  <motion.div
-                    className="absolute inset-0 bg-[#BE6400] opacity-40 blur-md"
-                    animate={{ opacity: [0.2, 0.4, 0.2] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                  />
-                )}
-                
-                {/* Hover shimmer effect */}
-                <motion.div
-                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent"
-                  initial={{ x: '-100%', opacity: 0 }}
-                  whileHover={{ 
-                    x: '100%',
-                    opacity: 1,
-                    transition: { duration: 0.6 }
-                  }}
-                />
-                
-                <motion.div
-                  className="relative z-10 flex items-center w-full"
-                  whileHover={{ x: 4 }}
-                  transition={{ duration: 0.2 }}
+{onNavigationClick ? (
+                <button
+                  onClick={() => onNavigationClick(item.href)}
+                  className={`group relative flex items-center px-5 py-4 rounded-2xl text-sm font-semibold transition-all duration-500 hover:scale-[1.02] hover:shadow-xl overflow-hidden w-full text-left ${
+                    item.current
+                      ? 'bg-gradient-to-r from-[#BE6400] to-[#BE6400]/80 text-white shadow-2xl ring-1 ring-[#BE6400]/20 hover:shadow-2xl hover:shadow-[#BE6400]/25'
+                      : 'text-neutral-700 hover:bg-white/50 hover:text-[#BE6400] backdrop-blur-sm border border-white/10 hover:border-[#BE6400]/20'
+                  }`}
                 >
-                  <IconComponent 
-                    className={`mr-4 h-5 w-5 transition-all duration-300 ${
-                      item.current 
-                        ? 'text-white drop-shadow-sm' 
-                        : 'text-neutral-600 group-hover:text-[#BE6400] group-hover:scale-110'
-                    }`}
+                  {/* Glow effect for active item */}
+                  {item.current && (
+                    <motion.div
+                      className="absolute inset-0 bg-[#BE6400] opacity-40 blur-md"
+                      animate={{ opacity: [0.2, 0.4, 0.2] }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                    />
+                  )}
+
+                  {/* Hover shimmer effect */}
+                  <motion.div
+                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent"
+                    initial={{ x: '-100%', opacity: 0 }}
+                    whileHover={{
+                      x: '100%',
+                      opacity: 1,
+                      transition: { duration: 0.6 }
+                    }}
                   />
-                  <span className="relative">
-                    {item.name}
-                    {item.current && (
-                      <motion.div
-                        className="absolute -bottom-0.5 left-0 right-0 h-0.5 bg-white/30 rounded-full"
-                        layoutId="activeIndicator"
+
+                  <motion.div
+                    className="relative z-10 flex items-center justify-between w-full"
+                    whileHover={{ x: 4 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <div className="flex items-center">
+                      <IconComponent
+                        className={`mr-4 h-5 w-5 transition-all duration-300 ${
+                          item.current
+                            ? 'text-white drop-shadow-sm'
+                            : 'text-neutral-600 group-hover:text-[#BE6400] group-hover:scale-110'
+                        }`}
                       />
-                    )}
-                  </span>
-                </motion.div>
-              </Link>
+                      <div>
+                        <div className="relative">
+                          {item.name}
+                          {item.current && (
+                            <motion.div
+                              className="absolute -bottom-0.5 left-0 right-0 h-0.5 bg-white/30 rounded-full"
+                              layoutId="activeIndicator"
+                            />
+                          )}
+                        </div>
+                        {item.badge && (
+                          <div className={`text-xs mt-1 ${
+                            item.current ? 'text-white/80' : 'text-neutral-500'
+                          }`}>
+                            {item.badge}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </motion.div>
+                </button>
+              ) : (
+                <Link
+                  href={item.href}
+                  className={`group relative flex items-center px-5 py-4 rounded-2xl text-sm font-semibold transition-all duration-500 hover:scale-[1.02] hover:shadow-xl overflow-hidden ${
+                    item.current
+                      ? 'bg-gradient-to-r from-[#BE6400] to-[#BE6400]/80 text-white shadow-2xl ring-1 ring-[#BE6400]/20 hover:shadow-2xl hover:shadow-[#BE6400]/25'
+                      : 'text-neutral-700 hover:bg-white/50 hover:text-[#BE6400] backdrop-blur-sm border border-white/10 hover:border-[#BE6400]/20'
+                  }`}
+                >
+                  {/* Glow effect for active item */}
+                  {item.current && (
+                    <motion.div
+                      className="absolute inset-0 bg-[#BE6400] opacity-40 blur-md"
+                      animate={{ opacity: [0.2, 0.4, 0.2] }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                    />
+                  )}
+
+                  {/* Hover shimmer effect */}
+                  <motion.div
+                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent"
+                    initial={{ x: '-100%', opacity: 0 }}
+                    whileHover={{
+                      x: '100%',
+                      opacity: 1,
+                      transition: { duration: 0.6 }
+                    }}
+                  />
+
+                  <motion.div
+                    className="relative z-10 flex items-center justify-between w-full"
+                    whileHover={{ x: 4 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <div className="flex items-center">
+                      <IconComponent
+                        className={`mr-4 h-5 w-5 transition-all duration-300 ${
+                          item.current
+                            ? 'text-white drop-shadow-sm'
+                            : 'text-neutral-600 group-hover:text-[#BE6400] group-hover:scale-110'
+                        }`}
+                      />
+                      <div>
+                        <div className="relative">
+                          {item.name}
+                          {item.current && (
+                            <motion.div
+                              className="absolute -bottom-0.5 left-0 right-0 h-0.5 bg-white/30 rounded-full"
+                              layoutId="activeIndicator"
+                            />
+                          )}
+                        </div>
+                        {item.badge && (
+                          <div className={`text-xs mt-1 ${
+                            item.current ? 'text-white/80' : 'text-neutral-500'
+                          }`}>
+                            {item.badge}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </motion.div>
+                </Link>
+              )}
             </motion.div>
           )
         })}
@@ -262,25 +335,6 @@ const ModernLayout = ({ children, navigation, userInfo, backgroundImage = '/back
         </motion.div>
         
         <div className="space-y-2">
-          <motion.button
-            onClick={handleSettings}
-            className="group relative flex items-center w-full px-4 py-3 text-sm font-semibold text-neutral-700 rounded-2xl hover:bg-white/30 hover:text-[#BE6400] transition-all duration-300 backdrop-blur-sm border border-white/10 hover:border-[#BE6400]/20 hover:shadow-lg overflow-hidden"
-            whileHover={{ scale: 1.02, x: 4 }}
-            whileTap={{ scale: 0.98 }}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 1.0 }}
-          >
-            <motion.div
-              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent"
-              initial={{ x: '-100%' }}
-              whileHover={{ x: '100%' }}
-              transition={{ duration: 0.6 }}
-            />
-            <Cog6ToothIcon className="w-5 h-5 mr-3 text-neutral-600 group-hover:text-[#BE6400] group-hover:rotate-90 transition-all duration-300" />
-            <span className="relative z-10">Settings</span>
-          </motion.button>
-          
           <motion.button
             onClick={handleSignOut}
             disabled={isSigningOut}

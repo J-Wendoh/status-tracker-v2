@@ -70,7 +70,11 @@ export default async function OfficerDashboardPage() {
       activity_status (
         pending_count,
         completed_count,
-        created_at
+        created_at,
+        status,
+        hod_comment,
+        hod_reviewed,
+        hod_reviewed_at
       )
     `)
     .eq("user_id", user.id)

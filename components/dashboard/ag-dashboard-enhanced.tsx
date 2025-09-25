@@ -1,18 +1,12 @@
 "use client"
 
 import { useState } from "react"
-import { motion, AnimatePresence } from "framer-motion"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Separator } from "@/components/ui/separator"
-import { LogOut, BarChart3, Building, Users, Crown } from "lucide-react"
+import { motion } from "framer-motion"
+import { BarChart3, Building, Users, Activity, CheckCircle, Clock, AlertCircle } from "lucide-react"
 import { AgAnalytics } from "./ag-analytics"
 import { AgDepartmentView } from "./ag-department-view"
-import { LoadingPopup } from "../ui/loading-popup"
-import { createClient } from "@/lib/supabase/client"
-import { useRouter } from "next/navigation"
-import Image from "next/image"
+import ModernLayout from "./modern-layout-v2"
+import { EnhancedKPICard } from "../ui/enhanced-kpi-card"
 import type { User, DepartmentSaga, Service } from "@/lib/supabase/types"
 
 interface ActivityWithFullDetails {
@@ -64,30 +58,6 @@ interface AgDashboardProps {
 
 export function AgDashboard({ user, departmentsSagas, activities, officers, services }: AgDashboardProps) {
   const [selectedView, setSelectedView] = useState<"analytics" | string>("analytics")
-  const [departmentsExpanded, setDepartmentsExpanded] = useState(true)
-  const [sagasExpanded, setSagasExpanded] = useState(true)
-  const [isLoading, setIsLoading] = useState(false)
-  const [isSigningOut, setIsSigningOut] = useState(false)
-  const router = useRouter()
-
-  const handleSignOut = async () => {
-    try {
-      setIsSigningOut(true)
-      const supabase = createClient()
-      const { error } = await supabase.auth.signOut()
-      if (error) {
-        console.error('Sign out error:', error)
-      }
-      // Force redirect regardless of error
-      window.location.href = "/auth/login"
-    } catch (error) {
-      console.error('Sign out error:', error)
-      // Force redirect on any error
-      window.location.href = "/auth/login"
-    } finally {
-      setIsSigningOut(false)
-    }
-  }
 
   // Group departments and SAGAs
   const departments = departmentsSagas.filter((item) => item.type === "Department")
@@ -98,448 +68,192 @@ export function AgDashboard({ user, departmentsSagas, activities, officers, serv
   const totalOfficers = officers.length
   const totalDepartmentsSagas = departmentsSagas.length
 
-  const pendingActivities = activities.filter((activity) => activity.activity_status.length === 0).length
-  const completedActivities = activities.filter((activity) =>
-    activity.activity_status.some((status) => status.completed_count && status.completed_count > 0),
+  // Calculate activity statistics
+  const pendingActivities = activities.filter(activity =>
+    !activity.activity_status || activity.activity_status.length === 0
   ).length
 
-  // Get selected department/SAGA data
-  const selectedDepartmentSaga = departmentsSagas.find((item) => item.id.toString() === selectedView)
-  const selectedActivities = selectedDepartmentSaga
-    ? activities.filter((activity) => activity.service.department_saga_id === selectedDepartmentSaga.id)
-    : []
-  const selectedOfficers = selectedDepartmentSaga
-    ? officers.filter((officer) => officer.departments_sagas?.id === selectedDepartmentSaga.id)
-    : []
-  const selectedServices = selectedDepartmentSaga
-    ? services.filter((service) => service.department_saga_id === selectedDepartmentSaga.id)
-    : []
+  const completedActivities = activities.filter(activity =>
+    activity.activity_status?.some(status => (status?.completed_count || 0) > 0)
+  ).length
 
-  const handleViewChange = async (view: string) => {
-    setIsLoading(true)
-    // Simulate loading with different messages based on view type
-    const loadingMessage = view === "analytics" 
-      ? "Loading system analytics..." 
-      : `Loading ${departmentsSagas.find(d => d.id.toString() === view)?.name || "department"} data...`
-    
-    await new Promise(resolve => setTimeout(resolve, 1200)) // Simulate loading
-    setSelectedView(view)
-    setIsLoading(false)
+  const inProgressActivities = activities.filter(activity =>
+    activity.activity_status?.some(status => (status?.pending_count || 0) > 0 && (status?.completed_count || 0) === 0)
+  ).length
+
+  // Build navigation array with departments and sagas
+  const navigation = [
+    {
+      name: 'System Analytics',
+      href: '/dashboard/ag',
+      icon: BarChart3,
+      current: selectedView === "analytics"
+    },
+    ...departments.map(dept => {
+      const deptActivities = activities.filter(
+        activity => activity.service.department_saga_id === dept.id
+      ).length
+      const deptOfficers = officers.filter(officer => officer.departments_sagas?.id === dept.id).length
+
+      return {
+        name: dept.name,
+        href: `/dashboard/ag/department/${dept.id}`,
+        icon: Building,
+        current: selectedView === dept.id.toString(),
+        badge: `${deptOfficers} officers • ${deptActivities} activities`
+      }
+    }),
+    ...sagas.map(saga => {
+      const sagaActivities = activities.filter(
+        activity => activity.service.department_saga_id === saga.id
+      ).length
+      const sagaOfficers = officers.filter(officer => officer.departments_sagas?.id === saga.id).length
+
+      return {
+        name: saga.name,
+        href: `/dashboard/ag/saga/${saga.id}`,
+        icon: Users,
+        current: selectedView === saga.id.toString(),
+        badge: `${sagaOfficers} officers • ${sagaActivities} activities`
+      }
+    })
+  ]
+
+  const userInfo = {
+    name: user.full_name,
+    role: 'Attorney General',
+    department: 'System Administrator'
   }
 
+  const handleViewChange = (href: string) => {
+    // Extract the view ID from the href
+    if (href === '/dashboard/ag') {
+      setSelectedView('analytics')
+    } else if (href.includes('/department/')) {
+      const deptId = href.split('/department/')[1]
+      setSelectedView(deptId)
+    } else if (href.includes('/saga/')) {
+      const sagaId = href.split('/saga/')[1]
+      setSelectedView(sagaId)
+    }
+  }
+
+  // Get selected department or saga data
+  const selectedDepartmentSaga = departmentsSagas.find(ds => ds.id.toString() === selectedView)
+  const selectedActivities = selectedDepartmentSaga
+    ? activities.filter(activity => activity.service.department_saga_id === selectedDepartmentSaga.id)
+    : []
+  const selectedOfficers = selectedDepartmentSaga
+    ? officers.filter(officer => officer.departments_sagas?.id === selectedDepartmentSaga.id)
+    : []
+  const selectedServices = selectedDepartmentSaga
+    ? services.filter(service => service.department_saga_id === selectedDepartmentSaga.id)
+    : []
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-amber-25 to-orange-100 flex relative">
-      {/* Warm Orange-Brown Background */}
-      <div className="fixed inset-0 z-0">
-        <div 
-          className="absolute inset-0 bg-cover bg-center opacity-6"
-          style={{ backgroundImage: `url('/background03.jpg')` }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-br from-orange-100/30 via-amber-50/60 to-orange-200/20" />
-        <div className="absolute inset-0 bg-gradient-to-tr from-orange-200/20 via-transparent to-amber-100/15" />
-        <div className="absolute inset-0 backdrop-blur-[0.5px]" />
-      </div>
-
-      {/* Warm Orange-Brown floating elements */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+    <ModernLayout
+      navigation={navigation}
+      userInfo={userInfo}
+      backgroundImage="/background03.jpg"
+      pageTitle="Attorney General Dashboard"
+      onNavigationClick={handleViewChange}
+    >
+      <div className="space-y-8">
+        {/* Welcome Section */}
         <motion.div
-          className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-orange-300/25 via-amber-300/20 to-orange-400/25 rounded-full blur-3xl"
-          animate={{
-            scale: [1, 1.2, 1],
-            rotate: [0, 180, 360],
-          }}
-          transition={{
-            duration: 20,
-            repeat: Infinity,
-            ease: "linear"
-          }}
-        />
-        <motion.div
-          className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-br from-amber-200/20 via-orange-100/30 to-amber-300/20 rounded-full blur-3xl"
-          animate={{
-            scale: [1.2, 1, 1.2],
-            rotate: [360, 180, 0],
-          }}
-          transition={{
-            duration: 25,
-            repeat: Infinity,
-            ease: "linear"
-          }}
-        />
-        <motion.div
-          className="absolute top-1/2 left-1/2 w-40 h-40 bg-orange-300/20 rounded-full blur-2xl transform -translate-x-1/2 -translate-y-1/2"
-          animate={{
-            scale: [1, 1.3, 1],
-            opacity: [0.3, 0.6, 0.3]
-          }}
-          transition={{
-            duration: 15,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
-        />
-      </div>
-
-      {/* Professional White Sidebar */}
-      <motion.div 
-        className="w-80 border-r bg-white/95 backdrop-blur-xl shadow-lg border-gray-200 relative z-10"
-        initial={{ x: -320, opacity: 0 }}
-        animate={{ x: 0, opacity: 1 }}
-        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-      >
-        {/* Subtle accent */}
-        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500 via-amber-600 to-orange-600" />
-        <div className="p-6 border-b border-gray-200">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-amber-600 rounded-xl flex items-center justify-center shadow-lg">
-              <Crown className="h-6 w-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-lg font-bold text-gray-800">
-                Attorney General
-              </h1>
-              <p className="text-xs text-gray-600 font-medium">System Analytics & Management</p>
-            </div>
-          </div>
-          
-          {/* Enhanced Welcome message */}
-          <div className="bg-gradient-to-r from-orange-50 to-amber-50 rounded-lg p-3 border border-orange-200">
-            <p className="text-sm text-gray-800 font-medium">Welcome, {user.full_name}</p>
-            <p className="text-xs text-gray-600 mt-1">Managing {totalOfficers} officers across {totalDepartmentsSagas} departments</p>
-          </div>
-        </div>
-
-        <ScrollArea className="h-[calc(100vh-140px)]">
-          <div className="p-4 space-y-4">
-            {/* Analytics Overview */}
-            <div>
-              <Button
-                variant={selectedView === "analytics" ? "default" : "ghost"}
-                className={`w-full justify-start gap-2 transition-all duration-300 hover:scale-[1.02] ${
-                  selectedView === "analytics"
-                    ? 'bg-gradient-to-r from-orange-600 to-amber-600 text-white shadow-lg border border-orange-400'
-                    : 'text-gray-700 hover:bg-gray-50 hover:text-orange-700 border border-transparent'
-                }`}
-                onClick={() => handleViewChange("analytics")}
-              >
-                <BarChart3 className={`h-4 w-4 ${
-                  selectedView === "analytics" ? 'text-white' : 'text-orange-600'
-                }`} />
-                System Analytics
-              </Button>
-            </div>
-
-            <Separator />
-
-            {/* Collapsible Departments */}
-            <div>
-              <button
-                onClick={() => setDepartmentsExpanded(!departmentsExpanded)}
-                className="w-full flex items-center justify-between text-sm font-medium text-gray-700 mb-2 p-2 hover:bg-gray-50 rounded-lg transition-colors"
-              >
-                <div className="flex items-center gap-2">
-                  <Building className="h-4 w-4" />
-                  Departments ({departments.length})
-                </div>
-                <motion.div
-                  animate={{ rotate: departmentsExpanded ? 90 : 0 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </motion.div>
-              </button>
-              
-              <motion.div
-                initial={false}
-                animate={{ height: departmentsExpanded ? 'auto' : 0, opacity: departmentsExpanded ? 1 : 0 }}
-                transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-                className="overflow-hidden"
-              >
-                <div className="space-y-2 pb-2">
-                  {departments.map((dept) => {
-                    const deptActivities = activities.filter(
-                      (activity) => activity.service.department_saga_id === dept.id,
-                    ).length
-                    const deptOfficers = officers.filter((officer) => officer.departments_sagas?.id === dept.id).length
-
-                    return (
-                      <Button
-                        key={dept.id}
-                        variant={selectedView === dept.id.toString() ? "default" : "ghost"}
-                        className={`w-full justify-start text-left h-auto p-4 transition-all duration-300 hover:scale-[1.02] hover:shadow-md ${
-                          selectedView === dept.id.toString()
-                            ? 'bg-gradient-to-r from-orange-600 to-amber-600 text-white shadow-lg border border-orange-400'
-                            : 'text-gray-700 hover:bg-gray-50 hover:text-orange-700 border border-transparent'
-                        }`}
-                        onClick={() => handleViewChange(dept.id.toString())}
-                      >
-                        <div className="flex-1">
-                          <div className="font-semibold text-sm">{dept.name}</div>
-                          <div className={`text-xs flex items-center gap-2 mt-1 ${
-                            selectedView === dept.id.toString() ? 'text-white/90' : 'text-gray-500'
-                          }`}>
-                            <span>{deptOfficers} officers</span>
-                            <span>•</span>
-                            <span>{deptActivities} activities</span>
-                          </div>
-                        </div>
-                      </Button>
-                    )
-                  })}
-                </div>
-              </motion.div>
-            </div>
-
-            <Separator />
-
-            {/* Collapsible SAGAs */}
-            <div>
-              <button
-                onClick={() => setSagasExpanded(!sagasExpanded)}
-                className="w-full flex items-center justify-between text-sm font-medium text-gray-700 mb-2 p-2 hover:bg-gray-50 rounded-lg transition-colors"
-              >
-                <div className="flex items-center gap-2">
-                  <Users className="h-4 w-4" />
-                  SAGAs ({sagas.length})
-                </div>
-                <motion.div
-                  animate={{ rotate: sagasExpanded ? 90 : 0 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </motion.div>
-              </button>
-              
-              <motion.div
-                initial={false}
-                animate={{ height: sagasExpanded ? 'auto' : 0, opacity: sagasExpanded ? 1 : 0 }}
-                transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-                className="overflow-hidden"
-              >
-                <div className="space-y-2 pb-2">
-                  {sagas.map((saga) => {
-                    const sagaActivities = activities.filter(
-                      (activity) => activity.service.department_saga_id === saga.id,
-                    ).length
-                    const sagaOfficers = officers.filter((officer) => officer.departments_sagas?.id === saga.id).length
-
-                    return (
-                      <Button
-                        key={saga.id}
-                        variant={selectedView === saga.id.toString() ? "default" : "ghost"}
-                        className={`w-full justify-start text-left h-auto p-4 transition-all duration-300 hover:scale-[1.02] hover:shadow-md ${
-                          selectedView === saga.id.toString()
-                            ? 'bg-gradient-to-r from-orange-600 to-amber-600 text-white shadow-lg border border-orange-400'
-                            : 'text-gray-700 hover:bg-gray-50 hover:text-orange-700 border border-transparent'
-                        }`}
-                        onClick={() => handleViewChange(saga.id.toString())}
-                      >
-                        <div className="flex-1">
-                          <div className="font-semibold text-sm">{saga.name}</div>
-                          <div className={`text-xs flex items-center gap-2 mt-1 ${
-                            selectedView === saga.id.toString() ? 'text-white/90' : 'text-gray-500'
-                          }`}>
-                            <span>{sagaOfficers} officers</span>
-                            <span>•</span>
-                            <span>{sagaActivities} activities</span>
-                          </div>
-                        </div>
-                      </Button>
-                    )
-                  })}
-                </div>
-              </motion.div>
-            </div>
-          </div>
-        </ScrollArea>
-
-        {/* Professional Sign Out Section */}
-        <div className="p-4 border-t border-gray-200 bg-gray-50">
-          <Button 
-            variant="outline" 
-            onClick={handleSignOut} 
-            disabled={isSigningOut}
-            className="w-full gap-2 text-gray-700 border-gray-300 hover:bg-gray-100 hover:border-orange-400 hover:text-orange-700 transition-all duration-300 hover:scale-[1.02] hover:shadow-md font-medium disabled:opacity-50"
-          >
-            <LogOut className={`h-4 w-4 ${isSigningOut ? 'animate-spin' : ''}`} />
-            {isSigningOut ? 'Signing Out...' : 'Sign Out'}
-          </Button>
-        </div>
-      </motion.div>
-
-      {/* Enhanced Main Content with Kenyan Branding */}
-      <div className="flex-1 relative z-10 overflow-hidden">
-        {/* Background Enhancement */}
-        <div className="absolute inset-0 z-0">
-          <div 
-            className="absolute inset-0 bg-cover bg-center opacity-8"
-            style={{ backgroundImage: `url('/background.jpg')` }}
-          />
-          <div className="absolute inset-0 bg-gradient-to-br from-secondary-100/40 via-white/60 to-accent-100/40" />
-          <div className="absolute inset-0 bg-gradient-to-tr from-primary-50/30 via-transparent to-gold-50/30" />
-        </div>
-
-        {/* Professional White Header */}
-        <motion.header 
-          className="border-b border-gray-200 bg-white/95 backdrop-blur-xl shadow-lg relative z-10"
-          initial={{ opacity: 0, y: -20 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 0.6 }}
+          className="bg-gradient-to-r from-orange-50 via-amber-50 to-yellow-50 rounded-2xl p-6 border border-orange-200/50 shadow-lg"
         >
-          {/* Orange Accent Stripe */}
-          <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-orange-500 via-amber-600 to-orange-600" />
-          <div className="px-6 py-5">
-            <div className="flex items-center justify-between">
-              {/* Enhanced Title Section with Logo */}
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-amber-600 rounded-xl flex items-center justify-center shadow-lg border-2 border-white/50">
-                  <Image
-                    src="/courtofarms.jpeg"
-                    alt="Kenya Coat of Arms"
-                    width={32}
-                    height={32}
-                    className="rounded-lg object-cover"
-                  />
-                </div>
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-800">
-                    {selectedView === "analytics"
-                      ? "System Analytics Overview"
-                      : selectedDepartmentSaga?.name || "Department/SAGA Details"}
-                  </h2>
-                  <p className="text-sm text-gray-600 mt-1 font-medium">
-                    {selectedView === "analytics"
-                      ? "Comprehensive view of all OAG activities and performance"
-                      : `${selectedDepartmentSaga?.type.toUpperCase()} • ${selectedActivities.length} activities • ${selectedOfficers.length} officers`}
-                  </p>
-                </div>
-              </div>
-              
-              {/* Enhanced Right Header with Brown Touches */}
-              <div className="flex items-center gap-4">
-                <div className="px-4 py-2.5 bg-gradient-to-r from-orange-600 via-orange-700 to-orange-800 rounded-xl shadow-lg border border-orange-400/30 relative overflow-hidden">
-                  {/* Shimmer effect */}
-                  <motion.div
-                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent"
-                    animate={{ x: ['-100%', '100%'] }}
-                    transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
-                  />
-                  <div className="flex items-center gap-3 relative z-10">
-                    <div className="w-8 h-8 bg-gradient-to-br from-amber-400 to-amber-600 rounded-lg flex items-center justify-center">
-                      <Crown className="h-5 w-5 text-white" />
-                    </div>
-                    <div>
-                      <span className="text-white text-sm font-bold block">Attorney General</span>
-                      <span className="text-amber-200 text-xs font-medium">System Administrator</span>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Orange Theme Indicator */}
-                <div className="flex items-center gap-1">
-                  <div className="w-2 h-8 bg-orange-500 rounded-full"></div>
-                  <div className="w-2 h-8 bg-amber-600 rounded-full"></div>
-                  <div className="w-2 h-8 bg-orange-700 rounded-full"></div>
-                </div>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 mb-2">
+                Welcome, {user.full_name}
+              </h1>
+              <p className="text-gray-700 font-medium">
+                Managing {totalOfficers} officers across {totalDepartmentsSagas} departments and SAGAs
+              </p>
+              <p className="text-sm text-gray-600 mt-1">
+                Overseeing {totalActivities} total activities system-wide
+              </p>
+            </div>
+            <div className="hidden md:block">
+              <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-amber-600 rounded-2xl flex items-center justify-center shadow-lg">
+                <Activity className="w-8 h-8 text-white" />
               </div>
             </div>
           </div>
-        </motion.header>
+        </motion.div>
 
-        {/* Enhanced Content with Vibrant Background */}
-        <main className="p-6 relative z-10 min-h-screen">
-          {/* Floating Kenyan Elements */}
-          <div className="absolute inset-0 pointer-events-none overflow-hidden">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <motion.div
-                key={i}
-                className={`absolute w-3 h-3 rounded-full ${
-                  i % 3 === 0 ? 'bg-secondary-300/30' : 
-                  i % 3 === 1 ? 'bg-primary-300/30' : 'bg-accent-300/30'
-                }`}
-                style={{
-                  left: `${Math.random() * 100}%`,
-                  top: `${Math.random() * 100}%`,
-                }}
-                animate={{
-                  y: [0, -30, 0],
-                  opacity: [0.3, 0.8, 0.3],
-                  scale: [1, 1.2, 1],
-                }}
-                transition={{
-                  duration: 4 + Math.random() * 2,
-                  repeat: Infinity,
-                  delay: Math.random() * 2,
-                }}
-              />
-            ))}
-          </div>
-          {/* Content Wrapper with Enhanced Styling */}
+        {/* System Overview KPIs */}
+        {selectedView === "analytics" && (
           <motion.div
-            className="relative z-10 bg-white/40 backdrop-blur-sm rounded-2xl border border-primary-100/50 shadow-luxury p-6"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
           >
-            {/* Content Background Gradient */}
-            <div className="absolute inset-0 bg-gradient-to-br from-white/80 via-primary-25/60 to-gold-25/40 rounded-2xl" />
-            <div className="relative z-10">
-            <AnimatePresence mode="wait">
-              {selectedView === "analytics" ? (
-                <motion.div
-                  key="analytics"
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <AgAnalytics
-                    activities={activities}
-                    officers={officers}
-                    departmentsSagas={departmentsSagas}
-                    services={services}
-                  />
-                </motion.div>
-              ) : selectedDepartmentSaga ? (
-                <motion.div
-                  key={selectedDepartmentSaga.id}
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <AgDepartmentView
-                    departmentSaga={selectedDepartmentSaga}
-                    activities={selectedActivities}
-                    officers={selectedOfficers}
-                    services={selectedServices}
-                  />
-                </motion.div>
-              ) : null}
-            </AnimatePresence>
-            </div>
+            <EnhancedKPICard
+              title="Total Activities"
+              value={totalActivities}
+              icon={Activity}
+              trend={{ value: 15, isPositive: true }}
+              className="bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200"
+            />
+            <EnhancedKPICard
+              title="Pending Review"
+              value={pendingActivities}
+              icon={Clock}
+              trend={{ value: -8, isPositive: true }}
+              className="bg-gradient-to-br from-yellow-50 to-orange-50 border-yellow-200"
+            />
+            <EnhancedKPICard
+              title="In Progress"
+              value={inProgressActivities}
+              icon={AlertCircle}
+              trend={{ value: 12, isPositive: true }}
+              className="bg-gradient-to-br from-purple-50 to-pink-50 border-purple-200"
+            />
+            <EnhancedKPICard
+              title="Completed"
+              value={completedActivities}
+              icon={CheckCircle}
+              trend={{ value: 23, isPositive: true }}
+              className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200"
+            />
           </motion.div>
-        </main>
+        )}
+
+        {/* Content Based on Selected View */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+        >
+          {selectedView === "analytics" ? (
+            <AgAnalytics
+              activities={activities}
+              officers={officers}
+              departmentsSagas={departmentsSagas}
+              services={services}
+            />
+          ) : selectedDepartmentSaga ? (
+            <AgDepartmentView
+              departmentSaga={selectedDepartmentSaga}
+              activities={selectedActivities}
+              officers={selectedOfficers}
+              services={selectedServices}
+            />
+          ) : (
+            <div className="bg-white rounded-2xl p-8 border border-gray-200 shadow-lg text-center">
+              <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">View Not Found</h3>
+              <p className="text-gray-600">Please select a valid department or SAGA from the navigation.</p>
+            </div>
+          )}
+        </motion.div>
       </div>
-
-      {/* Cool Loading Popup */}
-      <LoadingPopup 
-        isVisible={isLoading} 
-        message={selectedView === "analytics" 
-          ? "Loading system analytics..." 
-          : `Loading ${departmentsSagas.find(d => d.id.toString() === selectedView)?.name || "department"} data...`
-        }
-      />
-
-      {/* Sign Out Loading Popup */}
-      <LoadingPopup 
-        isVisible={isSigningOut} 
-        message="Signing out securely..."
-      />
-    </div>
+    </ModernLayout>
   )
 }
