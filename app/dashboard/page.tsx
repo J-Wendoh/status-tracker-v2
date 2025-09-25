@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 
+export const dynamic = 'force-dynamic'
+
 export default async function DashboardPage() {
   const timestamp = new Date().toISOString()
   console.log(`[AUTH-DEBUG] ${timestamp} - Dashboard page started`)
