@@ -54,3 +54,17 @@ export interface UserWithDepartmentSaga extends User {
     type: string
   }
 }
+
+export interface Comment {
+  id: number
+  activity_id: number
+  user_id: string
+  content: string
+  parent_comment_id: number | null
+  is_edited: boolean
+  created_at: string
+  updated_at: string
+  // Joined data
+  user?: User
+  replies?: Comment[]
+}

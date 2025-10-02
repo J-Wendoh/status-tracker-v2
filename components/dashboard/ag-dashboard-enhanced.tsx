@@ -81,7 +81,7 @@ export function AgDashboard({ user, departmentsSagas, activities, officers, serv
     activity.activity_status?.some(status => (status?.pending_count || 0) > 0 && (status?.completed_count || 0) === 0)
   ).length
 
-  // Build navigation array with departments and sagas
+  // Build navigation array with collapsible sections for departments and sagas
   const navigation = [
     {
       name: 'System Analytics',
@@ -89,34 +89,44 @@ export function AgDashboard({ user, departmentsSagas, activities, officers, serv
       icon: BarChart3,
       current: selectedView === "analytics"
     },
-    ...departments.map(dept => {
-      const deptActivities = activities.filter(
-        activity => activity.service.department_saga_id === dept.id
-      ).length
-      const deptOfficers = officers.filter(officer => officer.departments_sagas?.id === dept.id).length
+    {
+      name: 'Departments',
+      icon: Building,
+      isSection: true,
+      children: departments.map(dept => {
+        const deptActivities = activities.filter(
+          activity => activity.service.department_saga_id === dept.id
+        ).length
+        const deptOfficers = officers.filter(officer => officer.departments_sagas?.id === dept.id).length
 
-      return {
-        name: dept.name,
-        href: `/dashboard/ag/department/${dept.id}`,
-        icon: Building,
-        current: selectedView === dept.id.toString(),
-        badge: `${deptOfficers} officers • ${deptActivities} activities`
-      }
-    }),
-    ...sagas.map(saga => {
-      const sagaActivities = activities.filter(
-        activity => activity.service.department_saga_id === saga.id
-      ).length
-      const sagaOfficers = officers.filter(officer => officer.departments_sagas?.id === saga.id).length
+        return {
+          name: dept.name,
+          href: `/dashboard/ag/department/${dept.id}`,
+          icon: Building,
+          current: selectedView === dept.id.toString(),
+          badge: `${deptOfficers} officers • ${deptActivities} activities`
+        }
+      })
+    },
+    {
+      name: 'SAGAs',
+      icon: Users,
+      isSection: true,
+      children: sagas.map(saga => {
+        const sagaActivities = activities.filter(
+          activity => activity.service.department_saga_id === saga.id
+        ).length
+        const sagaOfficers = officers.filter(officer => officer.departments_sagas?.id === saga.id).length
 
-      return {
-        name: saga.name,
-        href: `/dashboard/ag/saga/${saga.id}`,
-        icon: Users,
-        current: selectedView === saga.id.toString(),
-        badge: `${sagaOfficers} officers • ${sagaActivities} activities`
-      }
-    })
+        return {
+          name: saga.name,
+          href: `/dashboard/ag/saga/${saga.id}`,
+          icon: Users,
+          current: selectedView === saga.id.toString(),
+          badge: `${sagaOfficers} officers • ${sagaActivities} activities`
+        }
+      })
+    }
   ]
 
   const userInfo = {
@@ -168,14 +178,20 @@ export function AgDashboard({ user, departmentsSagas, activities, officers, serv
         >
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900 mb-2">
-                Welcome, {user.full_name}
+              <h1 className="text-3xl font-bold text-[#BE6400] mb-2">
+                {selectedDepartmentSaga ? selectedDepartmentSaga.name : 'System Analytics'}
               </h1>
               <p className="text-gray-700 font-medium">
-                Managing {totalOfficers} officers across {totalDepartmentsSagas} departments and SAGAs
+                {selectedDepartmentSaga
+                  ? `${selectedOfficers.length} officers • ${selectedActivities.length} activities • ${selectedServices.length} services`
+                  : `Managing ${totalOfficers} officers across ${totalDepartmentsSagas} departments and SAGAs`
+                }
               </p>
               <p className="text-sm text-gray-600 mt-1">
-                Overseeing {totalActivities} total activities system-wide
+                {selectedDepartmentSaga
+                  ? `Viewing details for ${selectedDepartmentSaga.type}`
+                  : `Overseeing ${totalActivities} total activities system-wide`
+                }
               </p>
             </div>
             <div className="hidden md:block">
@@ -197,28 +213,28 @@ export function AgDashboard({ user, departmentsSagas, activities, officers, serv
             <EnhancedKPICard
               title="Total Activities"
               value={totalActivities}
-              icon={Activity}
+              icon={<Activity className="w-full h-full" />}
               trend={{ value: 15, isPositive: true }}
               className="bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200"
             />
             <EnhancedKPICard
               title="Pending Review"
               value={pendingActivities}
-              icon={Clock}
+              icon={<Clock className="w-full h-full" />}
               trend={{ value: -8, isPositive: true }}
               className="bg-gradient-to-br from-yellow-50 to-orange-50 border-yellow-200"
             />
             <EnhancedKPICard
               title="In Progress"
               value={inProgressActivities}
-              icon={AlertCircle}
+              icon={<AlertCircle className="w-full h-full" />}
               trend={{ value: 12, isPositive: true }}
               className="bg-gradient-to-br from-purple-50 to-pink-50 border-purple-200"
             />
             <EnhancedKPICard
               title="Completed"
               value={completedActivities}
-              icon={CheckCircle}
+              icon={<CheckCircle className="w-full h-full" />}
               trend={{ value: 23, isPositive: true }}
               className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200"
             />

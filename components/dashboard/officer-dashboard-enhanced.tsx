@@ -490,9 +490,9 @@ export function OfficerDashboard({ user, services, activities }: OfficerDashboar
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto"
+          className="fixed inset-0 z-[99999] flex items-center justify-center p-4 overflow-y-auto"
           style={{
-            background: 'linear-gradient(135deg, rgba(0,0,0,0.4) 0%, rgba(15,23,42,0.6) 50%, rgba(0,0,0,0.4) 100%)'
+            background: 'linear-gradient(135deg, rgba(0,0,0,0.5) 0%, rgba(15,23,42,0.7) 50%, rgba(0,0,0,0.5) 100%)'
           }}
           onClick={() => setShowActivityForm(false)}
         >

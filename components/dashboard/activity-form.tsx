@@ -138,17 +138,17 @@ export function ActivityForm({ services, userId, onSuccess }: ActivityFormProps)
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="grid gap-4">
-        <div className="grid gap-2">
-          <Label htmlFor="service">Service *</Label>
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="grid gap-6">
+        <div className="grid gap-3">
+          <Label htmlFor="service" className="text-base font-semibold text-slate-700">Service *</Label>
           <Select value={formData.serviceId} onValueChange={(value) => handleInputChange("serviceId", value)}>
-            <SelectTrigger>
+            <SelectTrigger className="h-12 text-base">
               <SelectValue placeholder="Select a service" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="z-[999999]">
               {services.map((service) => (
-                <SelectItem key={service.id} value={service.id.toString()}>
+                <SelectItem key={service.id} value={service.id.toString()} className="text-base py-3">
                   {service.name}
                 </SelectItem>
               ))}
@@ -156,8 +156,8 @@ export function ActivityForm({ services, userId, onSuccess }: ActivityFormProps)
           </Select>
         </div>
 
-        <div className="grid gap-2">
-          <Label htmlFor="count">Count *</Label>
+        <div className="grid gap-3">
+          <Label htmlFor="count" className="text-base font-semibold text-slate-700">Count *</Label>
           <Input
             id="count"
             type="number"
@@ -166,17 +166,19 @@ export function ActivityForm({ services, userId, onSuccess }: ActivityFormProps)
             value={formData.count}
             onChange={(e) => handleInputChange("count", e.target.value)}
             required
+            className="h-12 text-base"
           />
         </div>
 
-        <div className="grid gap-2">
-          <Label htmlFor="description">Description</Label>
+        <div className="grid gap-3">
+          <Label htmlFor="description" className="text-base font-semibold text-slate-700">Description</Label>
           <Textarea
             id="description"
             placeholder="Optional description of the activity"
             value={formData.description}
             onChange={(e) => handleInputChange("description", e.target.value)}
-            rows={3}
+            rows={4}
+            className="text-base resize-none"
           />
         </div>
 
@@ -221,9 +223,9 @@ export function ActivityForm({ services, userId, onSuccess }: ActivityFormProps)
         </div>
       </div>
 
-      {error && <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md">{error}</div>}
+      {error && <div className="text-base text-red-700 bg-red-50 p-4 rounded-xl border border-red-200 font-medium">{error}</div>}
 
-      <Button type="submit" disabled={isLoading} className="w-full">
+      <Button type="submit" disabled={isLoading} className="w-full h-12 text-base font-semibold bg-gradient-to-r from-[#BE6400] to-[#BE6400]/80 hover:from-[#BE6400]/90 hover:to-[#BE6400]/70">
         {isLoading ? "Logging Activity..." : "Log Activity"}
       </Button>
     </form>

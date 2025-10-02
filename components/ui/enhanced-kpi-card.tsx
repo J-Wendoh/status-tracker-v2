@@ -285,10 +285,10 @@ export function EnhancedKPICard({
                 <span>Progress to Target</span>
                 <span>{Math.round(progressPercentage)}%</span>
               </div>
-              <ProgressBar 
-                progress={progressPercentage} 
-                color={color}
+              <ProgressBar
+                progress={progressPercentage}
                 animated={animated}
+                variant="executive"
               />
             </div>
           )}

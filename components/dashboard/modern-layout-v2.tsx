@@ -1,28 +1,34 @@
 "use client"
 
-import { useState, ReactNode } from 'react'
+import { useState, useEffect, ReactNode } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { LoadingPopup } from '../ui/loading-popup'
-import { 
-  ChartBarIcon, 
-  HomeIcon, 
+import { ChangePasswordDialog } from './change-password-dialog'
+import {
+  ChartBarIcon,
+  HomeIcon,
   UserGroupIcon,
   DocumentTextIcon,
   Bars3Icon,
   XMarkIcon,
-  ArrowRightOnRectangleIcon
+  ArrowRightOnRectangleIcon,
+  LockClosedIcon,
+  ChevronDownIcon,
+  ChevronRightIcon
 } from '@heroicons/react/24/outline'
 
 interface NavigationItem {
   name: string
-  href: string
+  href?: string
   icon: any
   current?: boolean
   badge?: string
+  isSection?: boolean
+  children?: NavigationItem[]
 }
 
 interface ModernLayoutProps {
@@ -41,7 +47,47 @@ interface ModernLayoutProps {
 const ModernLayout = ({ children, navigation, userInfo, backgroundImage = '/background02.png', pageTitle = 'Dashboard', onNavigationClick }: ModernLayoutProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [isSigningOut, setIsSigningOut] = useState(false)
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false)
+  const [isPasswordChangeForced, setIsPasswordChangeForced] = useState(false)
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
+    'Departments': true,
+    'SAGAs': true
+  })
   const router = useRouter()
+
+  // Check if password change is required on mount
+  useEffect(() => {
+    const checkPasswordChangeRequired = async () => {
+      try {
+        const supabase = createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+
+        if (user) {
+          const { data: userData } = await supabase
+            .from('users')
+            .select('password_changed')
+            .eq('id', user.id)
+            .single()
+
+          if (userData && !userData.password_changed) {
+            setShowPasswordDialog(true)
+            setIsPasswordChangeForced(true)
+          }
+        }
+      } catch (error) {
+        console.error('Error checking password change status:', error)
+      }
+    }
+
+    checkPasswordChangeRequired()
+  }, [])
+
+  const toggleSection = (sectionName: string) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [sectionName]: !prev[sectionName]
+    }))
+  }
 
   const handleSignOut = async () => {
     try {
@@ -88,10 +134,10 @@ const ModernLayout = ({ children, navigation, userInfo, backgroundImage = '/back
   const SidebarContent = () => (
     <>
       {/* Luxurious Header */}
-      <div className="relative px-6 py-8 border-b border-white/20 bg-gradient-to-r from-white/5 to-[#BE6400]/5">
+      <div className="relative px-6 py-6 border-b border-white/30 bg-gradient-to-br from-white/80 via-white/60 to-[#BE6400]/10 flex-shrink-0 backdrop-blur-xl">
         {/* Premium backdrop */}
-        <div className="absolute inset-0 bg-gradient-to-br from-green-500/3 via-white/10 to-red-500/3" />
-        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gold-400/30 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-br from-green-600/5 via-transparent to-red-600/5" />
+        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#BE6400]/40 to-transparent" />
         
         <div className="relative z-10 flex items-center justify-between">
           <div className="flex items-center space-x-4">
@@ -141,9 +187,116 @@ const ModernLayout = ({ children, navigation, userInfo, backgroundImage = '/back
       </div>
 
       {/* Luxurious Navigation */}
-      <nav className="flex-1 px-4 py-8 space-y-3 overflow-y-auto">
+      <nav className="flex-1 px-4 py-8 space-y-2 overflow-y-auto min-h-0">
         {navigation.map((item, index) => {
           const IconComponent = item.icon
+
+          // Handle section headers with children
+          if (item.isSection && item.children) {
+            const isExpanded = expandedSections[item.name]
+            return (
+              <div key={item.name}>
+                {/* Section Header */}
+                <motion.button
+                  onClick={() => toggleSection(item.name)}
+                  className="group relative flex items-center justify-between w-full px-5 py-3 rounded-xl text-sm font-bold text-neutral-700 hover:bg-white/50 transition-all duration-300"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.1 + 0.3 }}
+                  whileHover={{ x: 2 }}
+                >
+                  <div className="flex items-center">
+                    <IconComponent className="mr-3 h-5 w-5 text-[#BE6400]" />
+                    <span>{item.name}</span>
+                  </div>
+                  {isExpanded ? (
+                    <ChevronDownIcon className="h-4 w-4 text-neutral-500" />
+                  ) : (
+                    <ChevronRightIcon className="h-4 w-4 text-neutral-500" />
+                  )}
+                </motion.button>
+
+                {/* Section Children */}
+                <AnimatePresence>
+                  {isExpanded && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.3 }}
+                      className="ml-4 mt-1 space-y-1 overflow-hidden"
+                    >
+                      {item.children.map((child, childIndex) => {
+                        const ChildIconComponent = child.icon
+                        return (
+                          <motion.div
+                            key={child.name}
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: childIndex * 0.05 }}
+                          >
+                            {onNavigationClick ? (
+                              <button
+                                onClick={() => child.href && onNavigationClick(child.href)}
+                                className={`group relative flex items-center px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 hover:scale-[1.01] w-full text-left ${
+                                  child.current
+                                    ? 'bg-gradient-to-r from-[#BE6400] to-[#BE6400]/80 text-white shadow-lg'
+                                    : 'text-neutral-600 hover:bg-white/40 hover:text-[#BE6400]'
+                                }`}
+                              >
+                                <ChildIconComponent
+                                  className={`mr-3 h-4 w-4 ${
+                                    child.current ? 'text-white' : 'text-neutral-500 group-hover:text-[#BE6400]'
+                                  }`}
+                                />
+                                <div className="flex-1 min-w-0">
+                                  <div className="truncate">{child.name}</div>
+                                  {child.badge && (
+                                    <div className={`text-xs mt-0.5 truncate ${
+                                      child.current ? 'text-white/80' : 'text-neutral-500'
+                                    }`}>
+                                      {child.badge}
+                                    </div>
+                                  )}
+                                </div>
+                              </button>
+                            ) : (
+                              <Link
+                                href={child.href || '#'}
+                                className={`group relative flex items-center px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 hover:scale-[1.01] ${
+                                  child.current
+                                    ? 'bg-gradient-to-r from-[#BE6400] to-[#BE6400]/80 text-white shadow-lg'
+                                    : 'text-neutral-600 hover:bg-white/40 hover:text-[#BE6400]'
+                                }`}
+                              >
+                                <ChildIconComponent
+                                  className={`mr-3 h-4 w-4 ${
+                                    child.current ? 'text-white' : 'text-neutral-500 group-hover:text-[#BE6400]'
+                                  }`}
+                                />
+                                <div className="flex-1 min-w-0">
+                                  <div className="truncate">{child.name}</div>
+                                  {child.badge && (
+                                    <div className={`text-xs mt-0.5 truncate ${
+                                      child.current ? 'text-white/80' : 'text-neutral-500'
+                                    }`}>
+                                      {child.badge}
+                                    </div>
+                                  )}
+                                </div>
+                              </Link>
+                            )}
+                          </motion.div>
+                        )
+                      })}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            )
+          }
+
+          // Handle regular navigation items
           return (
             <motion.div
               key={item.name}
@@ -151,7 +304,7 @@ const ModernLayout = ({ children, navigation, userInfo, backgroundImage = '/back
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: index * 0.1 + 0.3 }}
             >
-{onNavigationClick ? (
+{onNavigationClick && item.href ? (
                 <button
                   onClick={() => onNavigationClick(item.href)}
                   className={`group relative flex items-center px-5 py-4 rounded-2xl text-sm font-semibold transition-all duration-500 hover:scale-[1.02] hover:shadow-xl overflow-hidden w-full text-left ${
@@ -216,7 +369,7 @@ const ModernLayout = ({ children, navigation, userInfo, backgroundImage = '/back
                 </button>
               ) : (
                 <Link
-                  href={item.href}
+                  href={item.href || '#'}
                   className={`group relative flex items-center px-5 py-4 rounded-2xl text-sm font-semibold transition-all duration-500 hover:scale-[1.02] hover:shadow-xl overflow-hidden ${
                     item.current
                       ? 'bg-gradient-to-r from-[#BE6400] to-[#BE6400]/80 text-white shadow-2xl ring-1 ring-[#BE6400]/20 hover:shadow-2xl hover:shadow-[#BE6400]/25'
@@ -284,7 +437,7 @@ const ModernLayout = ({ children, navigation, userInfo, backgroundImage = '/back
       </nav>
 
       {/* Luxurious User Profile */}
-      <div className="relative border-t border-white/20 p-6 bg-gradient-to-br from-white/5 via-transparent to-[#BE6400]/5">
+      <div className="relative border-t border-white/20 p-6 bg-gradient-to-br from-white/5 via-transparent to-[#BE6400]/5 flex-shrink-0">
         <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gold-400/30 to-transparent" />
         
         <motion.div 
@@ -400,11 +553,11 @@ const ModernLayout = ({ children, navigation, userInfo, backgroundImage = '/back
             animate="open"
             exit="closed"
           >
-            <div className="flex h-full flex-col bg-white/85 backdrop-blur-xl shadow-2xl border-r border-white/30 relative">
+            <div className="flex h-full flex-col bg-white/85 backdrop-blur-xl shadow-2xl border-r border-white/30 relative overflow-hidden">
               {/* Subtle Kenyan flag accent */}
               <div className="absolute inset-0 bg-gradient-to-br from-green-500/2 via-transparent to-red-500/2" />
               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-green-600 via-[#BE6400] to-red-600" />
-              <div className="relative z-10">
+              <div className="relative z-10 flex flex-col h-full">
                 <SidebarContent />
               </div>
             </div>
@@ -414,11 +567,11 @@ const ModernLayout = ({ children, navigation, userInfo, backgroundImage = '/back
 
       {/* Desktop sidebar */}
       <div className="hidden lg:block fixed inset-y-0 left-0 z-30 w-64">
-        <div className="flex h-full flex-col bg-white/85 backdrop-blur-xl shadow-2xl border-r border-white/30 relative">
+        <div className="flex h-full flex-col bg-white/85 backdrop-blur-xl shadow-2xl border-r border-white/30 relative overflow-hidden">
           {/* Subtle Kenyan flag accent */}
           <div className="absolute inset-0 bg-gradient-to-br from-green-500/2 via-transparent to-red-500/2" />
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-green-600 via-[#BE6400] to-red-600" />
-          <div className="relative z-10">
+          <div className="relative z-10 flex flex-col h-full">
             <SidebarContent />
           </div>
         </div>
@@ -521,9 +674,20 @@ const ModernLayout = ({ children, navigation, userInfo, backgroundImage = '/back
       </div>
 
       {/* Sign Out Loading Popup */}
-      <LoadingPopup 
-        isVisible={isSigningOut} 
+      <LoadingPopup
+        isVisible={isSigningOut}
         message="Signing out securely..."
+      />
+
+      {/* Password Change Dialog */}
+      <ChangePasswordDialog
+        isOpen={showPasswordDialog}
+        onClose={() => {
+          if (!isPasswordChangeForced) {
+            setShowPasswordDialog(false)
+          }
+        }}
+        isForced={isPasswordChangeForced}
       />
     </div>
   )
